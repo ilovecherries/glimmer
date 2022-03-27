@@ -39,7 +39,7 @@ type CommentView = {
   comments: Array<CommentPartView>;
 };
 
-let oldPage: undefined | number;
+let oldPage: undefined | number = undefined;
 let text = ref("");
 let name = ref("");
 let scrollToBottom = ref<any>();
@@ -83,9 +83,15 @@ watchEffect(async () => {
   if (props.id) {
     const id = parseInt(props.id);
     nextTick(() => {
-      if (oldPage !== id) websocket.removeStatus(id);
-      websocket.setStatus(id);
-      oldPage = id;
+      if (oldPage && oldPage !== id) {
+        console.log("?");
+        websocket.removeStatus(id);
+      }
+      else {
+        console.log(":(");
+        websocket.setStatus(id);
+        oldPage = id;
+      }
     });
     if (contents.value[id]) {
       const page = contents.value[id];
