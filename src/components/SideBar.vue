@@ -13,7 +13,7 @@ const state = useStateStore();
 
 const { loggedIn, username, avatar } = storeToRefs(identity);
 const { login, logout } = identity;
-const { comments, users } = storeToRefs(shared);
+const { contents, activityChunks, users } = storeToRefs(shared);
 const { avatarSize } = storeToRefs(settings);
 const { openSidebar } = storeToRefs(state);
 
@@ -51,14 +51,21 @@ function signIn(username: string, password: string) {
       <hr />
       <div class="grow overflow-y-scroll">
         <div>
-          <div v-for="c in comments" :key="c.id">
-            <img
-              :src="avatarUrl(users[c.createUserId].avatar, avatarSize)"
-              alt="Avatar"
-              class="w-6 h-6 p-1 inline"
-            />
-            <div class="inline">{{ users[c.createUserId].username }}:</div>
-            <div class="inline">{{ c.text }}</div>
+          <div v-for="a in activityChunks" :key="a.id">
+            <div class="text-xl activity-bar">
+              <router-link :to="`/page/${a.contentId}`">
+                {{ contents[a.contentId].name }}
+              </router-link>
+            </div>
+            <div v-for="c in a.comments" class="activity-bar overflow-hidden" :key="c.id">
+              <img
+                :src="avatarUrl(users[c.createUserId].avatar, avatarSize)"
+                alt="Avatar"
+                class="w-6 h-6 p-1 inline"
+              />
+              <div class="inline">{{ users[c.createUserId].username }}:</div>
+              <div class="inline">{{ c.text }}</div>
+            </div>
           </div>
         </div>
       </div>
@@ -70,5 +77,12 @@ function signIn(username: string, password: string) {
 .sidebar {
   flex: 1 0 1;
   width: 30em;
+}
+
+.activity-bar {
+  line-height: 1.5em;
+  min-height: 1.5em;
+  height: 1.5em;
+  border-bottom: 1px black solid;;
 }
 </style>

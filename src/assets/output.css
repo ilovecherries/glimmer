@@ -512,28 +512,24 @@ Ensure the default browser behavior of the `hidden` attribute.
   display: none;
 }
 
-.h-screen {
-  height: 100vh;
+.h-full {
+  height: 100%;
 }
 
 .h-auto {
   height: auto;
 }
 
-.h-full {
-  height: 100%;
-}
-
 .h-6 {
   height: 1.5rem;
 }
 
-.h-12 {
-  height: 3rem;
-}
-
 .h-10 {
   height: 2.5rem;
+}
+
+.h-12 {
+  height: 3rem;
 }
 
 .w-8 {
@@ -548,12 +544,12 @@ Ensure the default browser behavior of the `hidden` attribute.
   width: 1.5rem;
 }
 
-.w-12 {
-  width: 3rem;
-}
-
 .w-10 {
   width: 2.5rem;
+}
+
+.w-12 {
+  width: 3rem;
 }
 
 .flex-shrink {
@@ -570,6 +566,10 @@ Ensure the default browser behavior of the `hidden` attribute.
 
 .flex-col {
   flex-direction: column;
+}
+
+.overflow-hidden {
+  overflow: hidden;
 }
 
 .overflow-y-scroll {
@@ -616,6 +616,15 @@ Ensure the default browser behavior of the `hidden` attribute.
 
 .italic {
   font-style: italic;
+}
+
+body {
+  position: fixed;
+  overflow: hidden;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }
 
 .hover\:bg-gray-200:hover {

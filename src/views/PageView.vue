@@ -93,6 +93,12 @@ watchEffect(async () => {
         oldPage = id;
       }
     });
+    nextTick(() => {
+      scrollToBottom.value.scrollIntoView({
+        behavior: "smooth",
+        block: "end",
+      });
+    });
     if (contents.value[id]) {
       const page = contents.value[id];
       headerText.value = page.name;
@@ -125,6 +131,7 @@ watchEffect(async () => {
           shared.comments = shared.comments.concat(messages);
           shared.sortComments();
           shared.rebuildCommentChunks(id);
+          shared.rebuildActivityChunks();
         }
       } else {
         throw new Error("Page wasn't returned from the API.");
@@ -201,14 +208,16 @@ watch(myStatuses.value, () => {
               class="w-12 h-12 mx-1"
             />
             <div class="grow">
-              <div>{{ c.username }}:</div>
+              <div class="flex">
+                <div class="grow">{{ c.username }}:</div>
+                <div class="text-xs text-gray italic">{{ c.date.toLocaleTimeString() }}</div>
+              </div>
               <div
                 v-for="m in c.comments"
                 class="chat-content my-0.5 flex grow hover:bg-gray-200"
                 :key="m.id"
               >
                 <div class="grow">{{ m.text }}</div>
-                <div class="text-xs text-gray italic">{{ m.createDate }}</div>
               </div>
             </div>
           </div>
