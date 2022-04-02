@@ -6,9 +6,11 @@ import { useIdentityStore } from "@/stores/identity";
 import { useSettingsStore } from "@/stores/settings";
 import { useStateStore } from "@/stores/state";
 import { useSharedStore } from "@/stores/shared";
-import { useWebsocketStore } from "@/stores/websocket";
+import { RoomStatus, useWebsocketStore } from "@/stores/websocket";
 import { storeToRefs } from "pinia";
-import { nextTick, ref, watch, watchEffect, type Ref } from "vue";
+import { nextTick, ref, watch, watchEffect } from "vue";
+import MarkupRender from "../components/MarkupRender.vue";
+import ChatView from "../components/ChatView.vue";
 
 const identity = useIdentityStore();
 const state = useStateStore();
@@ -19,31 +21,15 @@ const websocket = useWebsocketStore();
 const { headerText } = storeToRefs(state);
 
 const { avatarSize, titleNotifications } = storeToRefs(settings);
-const { myStatuses, commentChunks, contents, users, userlists } = storeToRefs(shared);
-console.log(users.value);
+const { commentChunks, contents, users, userlists } = storeToRefs(shared);
 
 const props = defineProps({
   id: String,
 });
 
-type CommentPartView = {
-  id: number;
-  text: string;
-  createDate: string;
-};
-
-type CommentView = {
-  id: number;
-  avatar: string;
-  username: string;
-  comments: Array<CommentPartView>;
-};
-
 let oldPage: undefined | number = undefined;
 let text = ref("");
 let name = ref("");
-let scrollToBottom = ref<any>();
-let displayedComments: Ref<CommentView[]> = ref(new Array<CommentView>());
 
 let textboxContent = "";
 
@@ -84,20 +70,14 @@ watchEffect(async () => {
     const id = parseInt(props.id);
     nextTick(() => {
       if (oldPage && oldPage !== id) {
-        console.log("?");
-        websocket.removeStatus(id);
-      }
-      else {
-        console.log(":(");
+        console.log(`${oldPage} -> ${id}`);
+        websocket.setStatus(oldPage, RoomStatus.notPresent);
+        websocket.setStatus(id);
+        oldPage = id;
+      } else {
         websocket.setStatus(id);
         oldPage = id;
       }
-    });
-    nextTick(() => {
-      scrollToBottom.value.scrollIntoView({
-        behavior: "smooth",
-        block: "end",
-      });
     });
     if (contents.value[id]) {
       const page = contents.value[id];
@@ -158,23 +138,10 @@ watch(commentChunks.value, () => {
             )
           );
         }
-        nextTick(() => {
-          scrollToBottom.value.scrollIntoView({
-            behavior: "smooth",
-            block: "end",
-          });
-        });
       }
     }
   }
 });
-
-watch(myStatuses.value, () => {
-  const id = parseInt(props.id!);
-  nextTick(() => {
-    websocket.setStatus(id);
-  });
-})
 </script>
 
 <template>
@@ -194,71 +161,10 @@ watch(myStatuses.value, () => {
             </div>
           </div>
         </div>
-        <div class="overflow-y-scroll grow h-full">
-          <div>
-            <p>{{ text }}</p>
-          </div>
-          <div
-            v-for="c in commentChunks[parseInt(props.id!)]"
-            :key="c.firstId"
-            class="flex mx-1 my-2"
-          >
-            <img
-              :src="avatarUrl(c.avatar, avatarSize)"
-              class="w-12 h-12 mx-1"
-            />
-            <div class="grow">
-              <div class="flex">
-                <div class="grow">{{ c.username }}:</div>
-                <div class="text-xs text-gray italic">{{ c.date.toLocaleTimeString() }}</div>
-              </div>
-              <div
-                v-for="m in c.comments"
-                class="chat-content my-0.5 flex grow hover:bg-gray-200"
-                :key="m.id"
-              >
-                <div class="grow">{{ m.text }}</div>
-              </div>
-            </div>
-          </div>
-          <hr />
-          <div
-            v-for="c in displayedComments"
-            :key="c.id"
-            class="flex mx-1 my-2"
-          >
-            <img
-              :src="avatarUrl(c.avatar, avatarSize)"
-              class="w-12 h-12 mx-1"
-            />
-            <div class="grow">
-              <div>
-                <div class="">
-                  {{ c.username }}
-                </div>
-              </div>
-              <div class="flex flex-col">
-                <div
-                  v-for="m in c.comments"
-                  class="chat-content my-0.5 flex grow hover:bg-gray-200"
-                  :key="m.id"
-                >
-                  <div class="grow">{{ m.text }}</div>
-                  <div class="text-xs text-gray italic">
-                    {{ new Date(m.createDate).toLocaleString() }}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div
-            :ref="
-              (el) => {
-                scrollToBottom = el;
-              }
-            "
-          ></div>
+        <div>
+          <MarkupRender :content="text" />
         </div>
+        <ChatView :contentId="parseInt(props.id!)" />
       </div>
       <div class="h-12 w-full">
         <input

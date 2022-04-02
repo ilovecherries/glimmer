@@ -5,6 +5,8 @@ import { storeToRefs } from "pinia";
 import { avatarUrl } from "@/lib/qcs/types/User";
 import { useSettingsStore } from "@/stores/settings";
 import { useStateStore } from "@/stores/state";
+import MarkupRender from "./MarkupRender.vue";
+import { nextTick, onUpdated, ref, watch, watchEffect } from "@vue/runtime-dom";
 
 const identity = useIdentityStore();
 const shared = useSharedStore();
@@ -14,15 +16,30 @@ const state = useStateStore();
 const { loggedIn, username, avatar } = storeToRefs(identity);
 const { login, logout } = identity;
 const { contents, activityChunks, users } = storeToRefs(shared);
-const { avatarSize } = storeToRefs(settings);
+const { avatarSize, activityDisplayUsername } = storeToRefs(settings);
 const { openSidebar } = storeToRefs(state);
 
 let formUsername = "",
   formPassword = "";
+let $scrollToBottom = ref<HTMLDivElement | null>(null);
 
 function signIn(username: string, password: string) {
   login(username, password);
 }
+
+function scroll() {
+  nextTick(() => {
+    if ($scrollToBottom.value) {
+      $scrollToBottom.value.scrollIntoView({
+        block: "end",
+      });
+    }
+  });
+}
+
+onUpdated(() => {
+  scroll();
+});
 </script>
 
 <template>
@@ -57,17 +74,25 @@ function signIn(username: string, password: string) {
                 {{ contents[a.contentId].name }}
               </router-link>
             </div>
-            <div v-for="c in a.comments" class="activity-bar overflow-hidden" :key="c.id">
+            <div
+              v-for="c in a.comments"
+              class="flex activity-bar overflow-hidden whitespace-pre text-ellipsis"
+              :key="c.id"
+            >
               <img
                 :src="avatarUrl(users[c.createUserId].avatar, avatarSize)"
-                alt="Avatar"
+                :alt="`${users[c.createUserId].username}'s avatar`"
                 class="w-6 h-6 p-1 inline"
+                :title="users[c.createUserId].username"
               />
-              <div class="inline">{{ users[c.createUserId].username }}:</div>
-              <div class="inline">{{ c.text }}</div>
+              <div class="inline" v-if="activityDisplayUsername">
+                {{ users[c.createUserId].username }}:
+              </div>
+              <div class="grow inline">{{ c.text }}</div>
             </div>
           </div>
         </div>
+        <div ref="$scrollToBottom"></div>
       </div>
     </div>
   </div>

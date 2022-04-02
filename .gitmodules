@@ -1,0 +1,3 @@
+[submodule "src/markup2"]
+	path = src/markup2
+	url = https://github.com/ilovecherries/markup2.git

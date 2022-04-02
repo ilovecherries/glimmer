@@ -1,7 +1,7 @@
 import { RequestParameter } from "./types/RequestParameter";
 import { RequestSearchParameter } from "./types/RequestSearchParameter";
 
-export const API_DOMAIN = "oboy.smilebasicsource.com";
+export const API_DOMAIN = "qcs.shsbs.xyz";
 
 const SUBPAGES_PER_PAGE = 25;
 const COMMENTS_PER_PAGE = 25;

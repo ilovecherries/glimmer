@@ -1,10 +1,6 @@
 import { defineStore } from "pinia";
 import { API_DOMAIN } from "@/lib/qcs/qcs";
-import type { TokenStatus } from "@/lib/qcs/types/TokenStatus";
-import { RequestParameter } from "@/lib/qcs/types/RequestParameter";
-import { RequestSearchParameter } from "@/lib/qcs/types/RequestSearchParameter";
-import type { SearchResult } from "@/lib/qcs/types/SearchResult";
-import { avatarUrl } from "@/lib/qcs/types/User";
+import { avatarUrl, type User } from "@/lib/qcs/types/User";
 
 export const useIdentityStore = defineStore({
   id: "identity",
@@ -27,45 +23,13 @@ export const useIdentityStore = defineStore({
       if (token) this.token = token;
 
       try {
-        const statusReq = await fetch(
-          `https://${API_DOMAIN}/api/Status/token`,
-          {
-            headers: this.headers,
-          }
-        );
-        const status: TokenStatus = await statusReq.json();
-        this.id = status.userId;
-        const search = new RequestParameter(
-          {
-            uid: this.id,
-            type: 3,
-          },
-          [
-            new RequestSearchParameter("user", "*", "id = @uid"),
-            // new RequestSearchParameter(
-            //   "content",
-            //   "*",
-            //   "createUserId = @uid and contentType = @type",
-            //   "id_desc",
-            //   100,
-            //   0
-            // ),
-          ]
-        );
-        const userReq = await fetch(`https://${API_DOMAIN}/api/Request`, {
-          method: "POST",
+        const meReq = await fetch(`https://${API_DOMAIN}/api/User/me`, {
           headers: this.headers,
-          body: JSON.stringify(search),
         });
-        const searchResult: SearchResult = await userReq.json();
-        const user = searchResult.data.user?.shift();
-        if (user) {
-          this.username = user.username;
-          this.avatar = user.avatar;
-          this.loggedIn = true;
-        } else {
-          throw new Error("Couldn't find user in DB");
-        }
+        const user: User = await meReq.json();
+        this.username = user.username;
+        this.avatar = user.avatar;
+        this.loggedIn = true;
       } catch (err) {
         console.error(err);
       }

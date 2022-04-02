@@ -576,6 +576,14 @@ Ensure the default browser behavior of the `hidden` attribute.
   overflow-y: scroll;
 }
 
+.text-ellipsis {
+  text-overflow: ellipsis;
+}
+
+.whitespace-pre {
+  white-space: pre;
+}
+
 .border {
   border-width: 1px;
 }

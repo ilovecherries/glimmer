@@ -106,7 +106,7 @@ export const useSharedStore = defineStore({
           nickname: "",
           avatar: user.avatar,
           comments: [],
-          date: new Date(),
+          date: new Date(comment.createDate),
         });
       };
 
@@ -156,7 +156,7 @@ export const useSharedStore = defineStore({
           p.push(c);
         return p;
       },
-      []);
+        []);
       this.comments = this.comments.sort((a, b) => {
         return a.id - b.id;
       });
@@ -168,7 +168,7 @@ export const useSharedStore = defineStore({
       this.commentChunks[roomId] = [];
       comments.map((x) => this.updateCommentChunks(x));
     },
-    rebuildActivityChunks() {;
+    rebuildActivityChunks() {
       this.activityChunks = [];
       this.comments.map((x) => this.updateActivityChunks(x));
     },
@@ -176,7 +176,6 @@ export const useSharedStore = defineStore({
       this.comments.push(comment);
       this.updateCommentChunks(comment);
       this.updateActivityChunks(comment);
-      console.log(this.activityChunks);
     },
   },
   share: {

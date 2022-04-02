@@ -1,9 +1,9 @@
 import { API_DOMAIN } from "@/lib/qcs/qcs";
 import type { RequestData } from "@/lib/qcs/types/RequestData";
-import type { RequestParameter } from "@/lib/qcs/types/RequestParameter";
 import type { WebsocketRequest } from "@/lib/qcs/types/WebsocketRequest";
 import {
   WebsocketResultType,
+  type StatusData,
   type WebsocketResult,
 } from "@/lib/qcs/types/WebsocketResult";
 import { BroadcastChannel, createLeaderElection } from "broadcast-channel";
@@ -20,10 +20,15 @@ export type WebsocketStoreState = {
   lastId: undefined | number;
   websocket: undefined | WebSocket;
   errorHandler: undefined | ListenerFunc;
-  requestIds: Array<string>;
+  requests: Map<string, ListenerFunc>;
   requestResults: Map<string, any>;
   ready: boolean;
 };
+
+export enum RoomStatus {
+  active = "active",
+  notPresent = "",
+}
 
 function getWebSocket(token: string, lastId?: number): WebSocket {
   const params = new URLSearchParams();
@@ -39,9 +44,8 @@ export const useWebsocketStore = defineStore({
       lastId: undefined,
       websocket: undefined,
       errorHandler: undefined,
-      requestIds: [],
+      requests: new Map(),
       ready: false,
-      requestResults: new Map(),
     } as WebsocketStoreState;
   },
   actions: {
@@ -103,37 +107,24 @@ export const useWebsocketStore = defineStore({
                   "This event type for websockets isn't tracked yet!"
                 );
             }
+            if (this.requests.has(res.id!)) {
+              const callback  = this.requests.get(res.id!)
+              if (callback) {
+                callback(res);
+              }
+            }
           } catch (err) {
             console.error(err);
           }
         };
       });
     },
-    makeRequest(search: RequestParameter, callback: (a: any) => void) {
-      if (!this.websocket)
-        throw new Error("The websocket isn't running, cannot make request.");
-      let id = "";
-      // do {
-      id = String(Math.random()).substring(2);
-      // } while (this.requestIds.findIndex((x) => x === id) === -1);
-      console.log(id);
-      this.requestIds.push(id);
-      const data: WebsocketRequest = {
-        type: "request",
-        data: search,
-        id: id,
-      };
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      this.websocket!.send(JSON.stringify(data));
-      setTimeout(() => {
-        console.log(this.requestResults);
-        if (this.requestResults.has(id)) {
-          const res = this.requestResults.get(id);
-          this.requestResults.delete(id);
-          this.requestIds = this.requestIds.filter((x) => x !== id);
-          callback(res);
-        }
-      }, 1000);
+    sendMessage(data: any, callback: ListenerFunc) {
+      this.whenReady(() => {
+        const id = uniqueIdGen();
+        this.requests.set(id, callback);
+        this.websocket!.send(JSON.stringify(data));
+      });
     },
     stop() {
       this.websocket?.close();
@@ -151,33 +142,20 @@ export const useWebsocketStore = defineStore({
         x();
       }
     },
-    updateMyStatus() {
-      this.whenReady(() => {
-        const shared = useSharedStore();
+    setStatus(room: number, status = RoomStatus.active) {
+      const data: StatusData = {};
+      data[room] = status;
 
+      this.whenReady(() => {
         if (this.websocket) {
           const req: WebsocketRequest = {
             type: "setuserstatus",
-            data: shared.myStatuses,
+            data,
             id: uniqueIdGen(),
           };
           this.websocket.send(JSON.stringify(req));
         }
       });
-    },
-    setStatus(room: number, status = "active") {
-      const shared = useSharedStore();
-
-      shared.myStatuses[room] = status;
-
-      this.updateMyStatus();
-    },
-    removeStatus(room: number) {
-      const shared = useSharedStore();
-
-      delete shared.myStatuses[room];
-
-      this.updateMyStatus();
     },
   },
 });

@@ -6,5 +6,6 @@ export const useSettingsStore = defineStore({
     avatarSize: 128,
     titleNotifications: true,
     minimumPageComments: 30,
+    activityDisplayUsername: true,
   }),
 });
