@@ -520,16 +520,16 @@ Ensure the default browser behavior of the `hidden` attribute.
   height: auto;
 }
 
+.h-12 {
+  height: 3rem;
+}
+
 .h-6 {
   height: 1.5rem;
 }
 
 .h-10 {
   height: 2.5rem;
-}
-
-.h-12 {
-  height: 3rem;
 }
 
 .w-8 {
@@ -540,6 +540,10 @@ Ensure the default browser behavior of the `hidden` attribute.
   width: 100%;
 }
 
+.w-12 {
+  width: 3rem;
+}
+
 .w-6 {
   width: 1.5rem;
 }
@@ -548,16 +552,20 @@ Ensure the default browser behavior of the `hidden` attribute.
   width: 2.5rem;
 }
 
-.w-12 {
-  width: 3rem;
-}
-
 .flex-shrink {
   flex-shrink: 1;
 }
 
 .grow {
   flex-grow: 1;
+}
+
+.resize-none {
+  resize: none;
+}
+
+.resize {
+  resize: both;
 }
 
 .flex-row {
@@ -582,6 +590,10 @@ Ensure the default browser behavior of the `hidden` attribute.
 
 .whitespace-pre {
   white-space: pre;
+}
+
+.break-words {
+  overflow-wrap: break-word;
 }
 
 .border {
@@ -626,7 +638,7 @@ Ensure the default browser behavior of the `hidden` attribute.
   font-style: italic;
 }
 
-body {
+body, #app {
   position: fixed;
   overflow: hidden;
   top: 0;

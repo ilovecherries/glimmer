@@ -8,7 +8,7 @@ import {
 } from "@/lib/qcs/types/WebsocketResult";
 import { BroadcastChannel, createLeaderElection } from "broadcast-channel";
 import { defineStore } from "pinia";
-import { useSharedStore } from "./shared";
+import { ContentState, useSharedStore } from "./shared";
 import { uniqueIdGen } from "./state";
 
 const channel = new BroadcastChannel("glimmer-ws");
@@ -16,12 +16,19 @@ const elector = createLeaderElection(channel);
 
 export type ListenerFunc = (a: WebsocketResult) => void;
 
+enum LeaderStatus {
+  unknown,
+  confirmed,
+  not,
+}
+
 export type WebsocketStoreState = {
   lastId: undefined | number;
   websocket: undefined | WebSocket;
   errorHandler: undefined | ListenerFunc;
   requests: Map<string, ListenerFunc>;
   requestResults: Map<string, any>;
+  leader: LeaderStatus;
   ready: boolean;
 };
 
@@ -45,18 +52,28 @@ export const useWebsocketStore = defineStore({
       websocket: undefined,
       errorHandler: undefined,
       requests: new Map(),
+      leader: LeaderStatus.unknown,
       ready: false,
     } as WebsocketStoreState;
   },
   actions: {
     start(token: string) {
       console.log("websocket start trigger!");
+      setTimeout(() => {
+        if (this.leader === LeaderStatus.unknown)
+          this.leader = LeaderStatus.not;
+      }, 10000);
       elector.awaitLeadership().then(() => {
         console.log("LEADERSHIP TAKEN!");
+        this.leader = LeaderStatus.confirmed;
         if (this.websocket) return;
         this.websocket = getWebSocket(token, this.lastId);
 
         const shared = useSharedStore();
+
+        this.websocket.onclose = () => {
+          this.start(token);
+        };
 
         this.websocket.onmessage = (event) => {
           try {
@@ -68,8 +85,23 @@ export const useWebsocketStore = defineStore({
               case WebsocketResultType.Live: {
                 if (res.data.lastId) this.lastId = res.data.lastId;
                 const data = res.data.data.message as RequestData;
+                // FIXME: the problem with this is that the content comes back
+                // incomplete, so we cannot rely on this being a full object,
+                // we'll have to find a way to make it so it knows it has to
+                // be patched later on
+                data.content?.map((x) => {
+                  if (shared.contents[x.id])
+                    Object.assign(shared.contents[x.id].data, x);
+                  else {
+                    shared.contents[x.id] = {
+                      data: x,
+                      state: ContentState.partial,
+                    };
+                  }
+                });
                 data.user?.map((x) => {
-                  shared.users[x.id] = x;
+                  if (shared.users[x.id]) Object.assign(shared.users[x.id], x);
+                  else shared.users[x.id] = x;
                 });
                 data.message?.map((x) => {
                   shared.addComment(x);
@@ -79,8 +111,19 @@ export const useWebsocketStore = defineStore({
               // eslint-disable-next-line no-fallthrough
               case WebsocketResultType.UserlistUpdate: {
                 const data = res.data;
+                (data.data as RequestData).content?.map((x) => {
+                  if (shared.contents[x.id])
+                    Object.assign(shared.contents[x.id], x);
+                  else {
+                    shared.contents[x.id] = {
+                      data: x,
+                      state: ContentState.partial,
+                    };
+                  }
+                });
                 (data.data as RequestData).user?.map((x) => {
-                  shared.users[x.id] = x;
+                  if (shared.users[x.id]) Object.assign(shared.users[x.id], x);
+                  else shared.users[x.id] = x;
                 });
                 if (data.statuses) {
                   Object.entries(data.statuses).map(([x, y]) => {
@@ -134,7 +177,10 @@ export const useWebsocketStore = defineStore({
       this.errorHandler = func;
     },
     whenReady(func: () => void) {
-      if (this.websocket) {
+      if (
+        this.leader === LeaderStatus.unknown ||
+        this.leader === LeaderStatus.confirmed
+      ) {
         const x = () => {
           if (this.ready) func();
           else setTimeout(x, 20);

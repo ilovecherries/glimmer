@@ -17,7 +17,7 @@ export type CommentChunk = {
   avatar: string;
   nickname: string;
   username: string;
-  date: Date;
+  date: string;
   comments: Array<Comment>;
 };
 
@@ -46,9 +46,19 @@ export type UserlistContainer = {
   [key: string]: StatusData;
 };
 
+export enum ContentState {
+  partial,
+  full,
+}
+
+export type ContentBox = {
+  data: Content;
+  state: ContentState;
+};
+
 export type ContentContainer = {
   // room id, content
-  [key: number]: Content;
+  [key: number]: ContentBox;
 };
 
 export type SharedStoreState = {
@@ -97,23 +107,26 @@ export const useSharedStore = defineStore({
     updateCommentChunks(comment: Comment) {
       const roomId = comment.contentId;
       const user = this.users[comment.createUserId];
+      const username = user.username;
+      const nickname = comment.values.n;
+      const avatar = comment.values.a || user.avatar;
       const pushChunk = () => {
         this.commentChunks[roomId].push({
           firstId: comment.id,
           lastId: comment.id,
           uid: user.id,
-          username: user.username,
-          nickname: "",
-          avatar: user.avatar,
+          username: username,
+          nickname: nickname,
+          avatar: avatar,
           comments: [],
-          date: new Date(comment.createDate),
+          date: comment.createDate,
         });
       };
 
-      if (this.commentChunks[roomId].length === 0) {
-        pushChunk();
-      } else if (!this.commentChunks[roomId]) {
+      if (!this.commentChunks[roomId]) {
         this.commentChunks[roomId] = [];
+        pushChunk();
+      } else if (this.commentChunks[roomId].length === 0) {
         pushChunk();
       } else {
         // [this.commentChunks[roomId].length - 1]
@@ -127,8 +140,9 @@ export const useSharedStore = defineStore({
           );
           if (
             current.uid !== user.id ||
-            current.avatar !== user.avatar ||
-            current.username !== user.username ||
+            current.avatar !== avatar ||
+            current.username !== username ||
+            current.nickname !== nickname ||
             diff >= 5
           ) {
             pushChunk();

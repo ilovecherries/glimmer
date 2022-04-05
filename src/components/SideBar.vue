@@ -16,7 +16,7 @@ const state = useStateStore();
 const { loggedIn, username, avatar } = storeToRefs(identity);
 const { login, logout } = identity;
 const { contents, activityChunks, users } = storeToRefs(shared);
-const { avatarSize, activityDisplayUsername } = storeToRefs(settings);
+const { avatarSize, activityDisplayUsername, nickname } = storeToRefs(settings);
 const { openSidebar } = storeToRefs(state);
 
 let formUsername = "",
@@ -53,6 +53,7 @@ onUpdated(() => {
         />
         <span>Logged in as </span><b>{{ username }}</b>
         <button class="block" @click="logout()">Log out</button>
+        <span>Nickname: </span><input type="text" v-model="nickname" />
       </div>
       <div v-else>
         <div>
@@ -71,7 +72,7 @@ onUpdated(() => {
           <div v-for="a in activityChunks" :key="a.id">
             <div class="text-xl activity-bar">
               <router-link :to="`/page/${a.contentId}`">
-                {{ contents[a.contentId].name }}
+                {{ contents[a.contentId].data.name }}
               </router-link>
             </div>
             <div

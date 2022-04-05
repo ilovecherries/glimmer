@@ -5,10 +5,10 @@ import { avatarUrl } from "@/lib/qcs/types/User";
 import { useIdentityStore } from "@/stores/identity";
 import { useSettingsStore } from "@/stores/settings";
 import { useStateStore } from "@/stores/state";
-import { useSharedStore } from "@/stores/shared";
+import { ContentState, useSharedStore } from "@/stores/shared";
 import { RoomStatus, useWebsocketStore } from "@/stores/websocket";
 import { storeToRefs } from "pinia";
-import { nextTick, ref, watch, watchEffect } from "vue";
+import { nextTick, watch, watchEffect } from "vue";
 import MarkupRender from "../components/MarkupRender.vue";
 import ChatView from "../components/ChatView.vue";
 
@@ -22,32 +22,13 @@ const { headerText } = storeToRefs(state);
 
 const { avatarSize, titleNotifications } = storeToRefs(settings);
 const { commentChunks, contents, users, userlists } = storeToRefs(shared);
+const { loggedIn } = storeToRefs(identity);
 
 const props = defineProps({
   id: String,
 });
 
 let oldPage: undefined | number = undefined;
-let text = ref("");
-let name = ref("");
-
-let textboxContent = "";
-
-async function sendMessage(text: string) {
-  let msg = {
-    text: text,
-    contentId: parseInt(props.id!),
-    values: {
-      m: "12y",
-    },
-  };
-
-  await fetch(`https://${API_DOMAIN}/api/Write/message`, {
-    method: "POST",
-    headers: identity.headers,
-    body: JSON.stringify(msg),
-  });
-}
 
 function changeFavicon(link: string) {
   let $favicon: HTMLLinkElement | null =
@@ -66,6 +47,7 @@ function changeFavicon(link: string) {
 }
 
 watchEffect(async () => {
+  console.log("ok")
   if (props.id) {
     const id = parseInt(props.id);
     nextTick(() => {
@@ -74,34 +56,40 @@ watchEffect(async () => {
         websocket.setStatus(oldPage, RoomStatus.notPresent);
         websocket.setStatus(id);
         oldPage = id;
-      } else {
+      } else if (!oldPage) {
+        console.log(`no old page???`)
         websocket.setStatus(id);
         oldPage = id;
       }
     });
-    if (contents.value[id]) {
-      const page = contents.value[id];
+    if (contents.value[id] && contents.value[id].state === ContentState.full) {
+      const page = contents.value[id].data;
+      console.log(contents.value);
       headerText.value = page.name;
-      name.value = page.name;
-      text.value = page.text;
       return;
     }
     try {
       const search = BasicPageDisplaySearch(id);
+      let headers = {
+        "Content-Type": "application/json",
+      };
+      if (loggedIn.value) {
+        headers = identity.headers;
+      }
       const pageReq = await fetch(`https://${API_DOMAIN}/api/Request`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers,
         body: JSON.stringify(search),
       });
       const pageJson: SearchResult = await pageReq.json();
       const page = pageJson.data.content?.shift();
+      console.log(page)
       if (page) {
         headerText.value = page.name;
-        name.value = page.name;
-        text.value = page.text;
-        contents.value[id] = page;
+        contents.value[id] = {
+          data: page,
+          state: ContentState.full,
+        };
         const users = pageJson.data.user;
         users?.map((x) => {
           shared.users[x.id] = x;
@@ -161,21 +149,12 @@ watch(commentChunks.value, () => {
             </div>
           </div>
         </div>
-        <div>
-          <MarkupRender :content="text" />
+        <div
+          v-if="contents[parseInt(props.id!)] && (contents[parseInt(props.id!)].state === ContentState.full)"
+        >
+          <MarkupRender :content="contents[parseInt(props.id!)].data.text" />
         </div>
-        <ChatView :contentId="parseInt(props.id!)" />
-      </div>
-      <div class="h-12 w-full">
-        <input
-          @keydown.enter="
-            sendMessage(textboxContent);
-            textboxContent = '';
-          "
-          type="text"
-          v-model="textboxContent"
-          class="h-full w-full p-1 chat-box"
-        />
+        <ChatView :contentId="parseInt(props.id!)" :showChatBox="true" />
       </div>
     </div>
   </main>

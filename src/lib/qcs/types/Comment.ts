@@ -1,6 +1,7 @@
 export type CommentValues = {
-  m: string;
-  n: string;
+  m?: string;
+  n?: string;
+  a?: string;
 };
 
 export type Comment = {

@@ -60,16 +60,6 @@ watchEffect(() => {
 
 <style>
 @import "./assets/output.css";
-#app {
-  height: inherit;
-}
-
-body {
-  height: 100vh;
-  padding: 0;
-  /* overflow: hidden; */
-}
-
 header {
   background: gray;
 }

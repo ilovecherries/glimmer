@@ -21,15 +21,15 @@ export const BasicPageDisplaySearch = function (
     [
       new RequestSearchParameter("content", "*", "id = @pageid"),
       //Subpages: we want most fields, but not SOME big/expensive fields. Hence ~
-      new RequestSearchParameter(
-        "content",
-        "~values,keywords,votes",
-        "parentId = @pageid and !notdeleted() and contentType <> @filetype",
-        "contentType,literalType,name",
-        subpagesPerPage,
-        subpagesPerPage * subpagePage,
-        "subpages"
-      ),
+      // new RequestSearchParameter(
+      //   "content",
+      //   "~values,keywords,votes",
+      //   "parentId = @pageid and !notdeleted() and contentType <> @filetype",
+      //   "contentType,literalType,name",
+      //   subpagesPerPage,
+      //   subpagesPerPage * subpagePage,
+      //   "subpages"
+      // ),
       new RequestSearchParameter(
         "message",
         "*",
@@ -39,13 +39,13 @@ export const BasicPageDisplaySearch = function (
         commentsPerPage * commentPage
       ),
       // We grab your personal watches/votes/etc specifically for the main page to see if you ARE watching it
-      new RequestSearchParameter("watch", "*", "contentId = @pageid"), //This is YOUR watch (the requester)
-      new RequestSearchParameter("vote", "*", "contentId = @pageid"), //This is YOUR vote (the requester)
+      // new RequestSearchParameter("watch", "*", "contentId = @pageid"), //This is YOUR watch (the requester)
+      // new RequestSearchParameter("vote", "*", "contentId = @pageid"), //This is YOUR vote (the requester)
       // And then users in everything
       new RequestSearchParameter(
         "user",
         "*",
-        "id in @message.createUserId or id in @content.createUserId or id in @subpages.createUserId"
+        "id in @message.createUserId or id in @content.createUserId"
       ),
     ]
   );

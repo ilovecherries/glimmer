@@ -7,5 +7,6 @@ export const useSettingsStore = defineStore({
     titleNotifications: true,
     minimumPageComments: 30,
     activityDisplayUsername: true,
+    nickname: "",
   }),
 });
