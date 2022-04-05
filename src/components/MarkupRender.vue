@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, watchEffect } from "vue";
 
-import { Markup } from "../markup2/parse";
-import "../markup2/render";
-import "../markup2/legacy";
+import { Markup } from "markup2/parse";
+import "markup2/render";
+import "markup2/legacy";
 
 const props = defineProps({
   content: String,
