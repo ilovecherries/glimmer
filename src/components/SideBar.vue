@@ -5,8 +5,7 @@ import { storeToRefs } from "pinia";
 import { avatarUrl } from "@/lib/qcs/types/User";
 import { useSettingsStore } from "@/stores/settings";
 import { useStateStore } from "@/stores/state";
-import MarkupRender from "./MarkupRender.vue";
-import { nextTick, onUpdated, ref, watch, watchEffect } from "@vue/runtime-dom";
+import { nextTick, onUpdated, ref } from "@vue/runtime-dom";
 
 const identity = useIdentityStore();
 const shared = useSharedStore();
@@ -43,7 +42,7 @@ onUpdated(() => {
 </script>
 
 <template>
-  <div :class="`sidebar ${openSidebar ? '' : 'hidden'}`">
+  <div v-show="openSidebar" class="sidebar">
     <div class="flex flex-col h-full">
       <div v-if="loggedIn">
         <img
@@ -69,7 +68,7 @@ onUpdated(() => {
       <hr />
       <div class="grow overflow-y-scroll">
         <div>
-          <div v-for="a in activityChunks" :key="a.id">
+          <div v-for="a in activityChunks" :key="a.firstId">
             <div class="text-xl activity-bar">
               <router-link :to="`/page/${a.contentId}`">
                 {{ contents[a.contentId].data.name }}
@@ -109,6 +108,6 @@ onUpdated(() => {
   line-height: 1.5em;
   min-height: 1.5em;
   height: 1.5em;
-  border-bottom: 1px black solid;;
+  border-bottom: 1px black solid;
 }
 </style>

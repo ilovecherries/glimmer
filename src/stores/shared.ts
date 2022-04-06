@@ -9,27 +9,27 @@ export type UserStatus = {
   username: string;
   status: string;
 };
-
-export type CommentChunk = {
+export interface Chunk {
   firstId: number;
   lastId: number;
+  comments: Array<Comment>;
+}
+
+export interface CommentChunk extends Chunk {
   uid: number;
   avatar: string;
-  nickname: string;
+  nickname?: string;
   username: string;
   date: string;
-  comments: Array<Comment>;
-};
+}
 
 export type CommentChunkContainer = {
   [key: number]: Array<CommentChunk>;
 };
 
-export type ActivityChunk = {
-  id: number;
+export interface ActivityChunk extends Chunk {
   contentId: number;
-  comments: Array<Comment>;
-};
+}
 
 export type CommentContainer = {
   // room id, comments
@@ -90,7 +90,8 @@ export const useSharedStore = defineStore({
       const { contentId } = comment;
       const pushChunk = () => {
         this.activityChunks.push({
-          id: comment.id,
+          firstId: comment.id,
+          lastId: comment.id,
           contentId,
           comments: [comment],
         });
@@ -102,6 +103,7 @@ export const useSharedStore = defineStore({
         pushChunk();
       } else if (current) {
         current.comments.push(comment);
+        current.lastId = comment.id;
       }
     },
     updateCommentChunks(comment: Comment) {
@@ -170,7 +172,7 @@ export const useSharedStore = defineStore({
           p.push(c);
         return p;
       },
-        []);
+      []);
       this.comments = this.comments.sort((a, b) => {
         return a.id - b.id;
       });
@@ -190,6 +192,57 @@ export const useSharedStore = defineStore({
       this.comments.push(comment);
       this.updateCommentChunks(comment);
       this.updateActivityChunks(comment);
+    },
+    deleteFromChunks(chunks: Array<Chunk>, commentId: number) {
+      for (let i = 0; i < chunks.length; i++) {
+        if (chunks[i].firstId <= commentId && chunks[i].lastId >= commentId) {
+          const index = chunks[i].comments.findIndex((x) => x.id === commentId);
+          if (index > -1) {
+            chunks[i].comments.splice(index, 1);
+            if (chunks[i].comments.length === 0) {
+              chunks.splice(i, 1);
+            } else {
+              chunks[i].firstId = chunks[i].comments.at(0)!.id;
+              chunks[i].lastId = chunks[i].comments.at(-1)!.id;
+            }
+          } else {
+            break;
+          }
+        }
+      }
+    },
+    editInChunks(chunks: Array<Chunk>, comment: Comment) {
+      const commentId = comment.id;
+      for (let i = 0; i < chunks.length; i++) {
+        if (chunks[i].firstId <= commentId && chunks[i].lastId >= commentId) {
+          const index = chunks[i].comments.findIndex((x) => x.id === commentId);
+          if (index > -1) {
+            chunks[i].comments[index] = comment;
+          } else {
+            break;
+          }
+        }
+      }
+    },
+    deleteComment(comment: Comment) {
+      const { id, contentId } = comment;
+      const commentIndex = this.comments.findIndex((x) => x.id === id);
+      if (commentIndex > -1) {
+        this.comments.splice(commentIndex, 1);
+        const room = this.commentChunks[contentId];
+        this.deleteFromChunks(room, id);
+        this.deleteFromChunks(this.activityChunks, id);
+      }
+    },
+    editComment(comment: Comment) {
+      const { id, contentId } = comment;
+      const commentIndex = this.comments.findIndex((x) => x.id === id);
+      if (commentIndex > -1) {
+        this.comments[commentIndex] = comment;
+        const room = this.commentChunks[contentId];
+        this.editInChunks(room, comment);
+        this.editInChunks(this.activityChunks, comment);
+      }
     },
   },
   share: {

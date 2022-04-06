@@ -29,5 +29,5 @@ watchEffect(() => {
 </script>
 
 <template>
-  <span ref="$el"></span>
+  <span ref="$el" class="break-words"></span>
 </template>

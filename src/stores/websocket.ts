@@ -2,6 +2,8 @@ import { API_DOMAIN } from "@/lib/qcs/qcs";
 import type { RequestData } from "@/lib/qcs/types/RequestData";
 import type { WebsocketRequest } from "@/lib/qcs/types/WebsocketRequest";
 import {
+  WebsocketEventAction,
+  WebsocketEventType,
   WebsocketResultType,
   type StatusData,
   type WebsocketResult,
@@ -103,8 +105,24 @@ export const useWebsocketStore = defineStore({
                   if (shared.users[x.id]) Object.assign(shared.users[x.id], x);
                   else shared.users[x.id] = x;
                 });
-                data.message?.map((x) => {
-                  shared.addComment(x);
+
+                const events = res.data.events;
+                events?.map((e) => {
+                  if (e.type === WebsocketEventType.Message) {
+                    const x = data.message?.find((x) => x.id === e.refId);
+                    if (x)
+                      switch (e.action) {
+                        case WebsocketEventAction.Create:
+                          shared.addComment(x);
+                          break;
+                        case WebsocketEventAction.Delete:
+                          shared.deleteComment(x);
+                          break;
+                        case WebsocketEventAction.Update:
+                          shared.editComment(x);
+                          break;
+                      }
+                  }
                 });
                 break;
               }
@@ -151,7 +169,7 @@ export const useWebsocketStore = defineStore({
                 );
             }
             if (this.requests.has(res.id!)) {
-              const callback  = this.requests.get(res.id!)
+              const callback = this.requests.get(res.id!);
               if (callback) {
                 callback(res);
               }

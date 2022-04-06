@@ -9,12 +9,22 @@ export enum WebsocketResultType {
   BadToken = "badtoken",
 }
 
+export enum WebsocketEventAction {
+  Create = "create",
+  Delete = "delete",
+  Update = "update",
+}
+
+export enum WebsocketEventType {
+  Message = "message",
+}
+
 export type WebsocketEvent = {
-  action: string;
+  action: WebsocketEventAction;
   data: string;
   id: number;
   refId: number;
-  type: string;
+  type: WebsocketEventType;
   userId: number;
 };
 

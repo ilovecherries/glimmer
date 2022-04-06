@@ -17,6 +17,10 @@ export const useIdentityStore = defineStore({
       Authorization: `Bearer ${state.token}`,
       "Content-Type": "application/json",
     }),
+    plaintTextHeaders: (state) => ({
+      Authorization: `Bearer ${state.token}`,
+      "Content-Type": "text/plain",
+    }),
   },
   actions: {
     async refresh(token?: string) {
@@ -29,6 +33,7 @@ export const useIdentityStore = defineStore({
         const user: User = await meReq.json();
         this.username = user.username;
         this.avatar = user.avatar;
+        this.id = user.id;
         this.loggedIn = true;
       } catch (err) {
         console.error(err);

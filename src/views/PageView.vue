@@ -47,7 +47,6 @@ function changeFavicon(link: string) {
 }
 
 watchEffect(async () => {
-  console.log("ok")
   if (props.id) {
     const id = parseInt(props.id);
     nextTick(() => {
@@ -57,7 +56,6 @@ watchEffect(async () => {
         websocket.setStatus(id);
         oldPage = id;
       } else if (!oldPage) {
-        console.log(`no old page???`)
         websocket.setStatus(id);
         oldPage = id;
       }
@@ -83,7 +81,6 @@ watchEffect(async () => {
       });
       const pageJson: SearchResult = await pageReq.json();
       const page = pageJson.data.content?.shift();
-      console.log(page)
       if (page) {
         headerText.value = page.name;
         contents.value[id] = {
@@ -111,20 +108,22 @@ watchEffect(async () => {
 });
 
 watch(commentChunks.value, () => {
-  const current = commentChunks.value[parseInt(props.id!)];
-  if (current) {
-    const last = current[current.length - 1];
-    if (last) {
-      const lastComment = last.comments[last.comments.length - 1];
-      if (lastComment) {
-        if (titleNotifications.value) {
-          document.title = lastComment.text;
-          changeFavicon(
-            avatarUrl(
-              users.value[lastComment.createUserId].avatar,
-              avatarSize.value
-            )
-          );
+  if (props.id) {
+    const current = commentChunks.value[parseInt(props.id)];
+    if (current) {
+      const last = current[current.length - 1];
+      if (last) {
+        const lastComment = last.comments[last.comments.length - 1];
+        if (lastComment) {
+          if (titleNotifications.value) {
+            document.title = lastComment.text;
+            changeFavicon(
+              avatarUrl(
+                users.value[lastComment.createUserId].avatar,
+                avatarSize.value
+              )
+            );
+          }
         }
       }
     }
@@ -149,11 +148,11 @@ watch(commentChunks.value, () => {
             </div>
           </div>
         </div>
-        <div
+        <!-- <div
           v-if="contents[parseInt(props.id!)] && (contents[parseInt(props.id!)].state === ContentState.full)"
         >
           <MarkupRender :content="contents[parseInt(props.id!)].data.text" />
-        </div>
+        </div> -->
         <ChatView :contentId="parseInt(props.id!)" :showChatBox="true" />
       </div>
     </div>
