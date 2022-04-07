@@ -10,13 +10,20 @@ export enum WebsocketResultType {
 }
 
 export enum WebsocketEventAction {
-  Create = "create",
-  Delete = "delete",
-  Update = "update",
+  create = 1,
+  read = 2,
+  update = 4,
+  delete = 8,
 }
 
 export enum WebsocketEventType {
-  Message = "message",
+  none = 0,
+  message = 1,
+  activity = 2,
+  watch = 3,
+  uservariable = 4,
+  user = 5,
+  userlist = 6,
 }
 
 export type WebsocketEvent = {

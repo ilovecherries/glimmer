@@ -21,6 +21,9 @@ export const useIdentityStore = defineStore({
       Authorization: `Bearer ${state.token}`,
       "Content-Type": "text/plain",
     }),
+    emptyHeaders: (state) => ({
+      Authorization: `Bearer ${state.token}`,
+    }),
   },
   actions: {
     async refresh(token?: string) {

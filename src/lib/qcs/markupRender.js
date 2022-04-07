@@ -1,0 +1,257 @@
+import { Markup } from "markup2/parse";
+import { HighlightJS } from "highlight.js";
+
+Markup.INJECT = (Markup) => {
+  "use strict";
+
+  // This tag-function parses an HTML string, and returns a function
+  //  which creates a copy of that HTML DOM tree when called.
+  // ex: let create = 𐀶`<div></div>`
+  //  - create() acts like document.createElement('div')
+  function 𐀶([html]) {
+    let temp = document.createElement("template");
+    temp.innerHTML = html;
+    let elem = temp.content.firstChild;
+    return elem.cloneNode.bind(elem, true);
+  }
+
+  function filter_url(url) {
+    if (/^ *javascript:/i.test(url)) return "";
+    return url;
+  }
+
+  let CREATE = {
+    newline: 𐀶`<br>`,
+
+    divider: 𐀶`<hr>`,
+
+    code: function ({ text, lang }) {
+      // <tt>?
+      let e = this();
+      e.textContent = text;
+      e.class = `language-${lang}`;
+	  HighlightJS.highlightElement(e);
+      return e;
+    }.bind(𐀶`<pre>`),
+    // .bind(value) makes that value accessible as `this` inside the function, when it's called. (note that the value is only evaluated once)
+    // I'm just using this as a simple trick to store the html templates with their init functions, but there's no special reason to do it this way
+
+    icode: function ({ text }) {
+      let e = this();
+      e.textContent = text.replace(/ /g, " "); // non breaking space..
+      return e;
+    }.bind(𐀶`<code>`),
+
+    simple_link: function ({ url, text }) {
+      let e = this();
+      e.textContent = text;
+      e.href = filter_url(url);
+      return e;
+    }.bind(𐀶`<a href="" target=_blank>`),
+
+    image: function ({ url, alt, width, height }) {
+      let e = this();
+      e.src = filter_url(url);
+      e.onerror = e.onload = e.removeAttribute.bind(e, "data-loading");
+      if (alt != null) e.alt = alt;
+      if (width) e.width = width;
+      if (height) e.height = height;
+      return e;
+    }.bind(𐀶`<img data-loading data-shrink tabindex=-1>`),
+
+    error: 𐀶`<div class='error'><code>🕯error🕯</code>🕯message🕯<pre>🕯stack🕯`,
+    // todo: we need a preview flag which disables these because they're very slow... invalid images are bad too.
+    audio: function ({ url }) {
+      let e = this();
+      e.src = filter_url(url);
+      return e;
+    }.bind(𐀶`<audio controls preload=none>`),
+
+    video: function ({ url }) {
+      let e = this();
+      e.src = filter_url(url);
+      return e;
+    }.bind(𐀶`<video controls preload=none>`),
+
+    italic: 𐀶`<i>`,
+
+    bold: 𐀶`<b>`,
+
+    strikethrough: 𐀶`<s>`,
+
+    underline: 𐀶`<u>`,
+
+    heading: function ({ level }) {
+      return this[level - 1]();
+    }.bind([𐀶`<h2>`, 𐀶`<h3>`, 𐀶`<h4>`, 𐀶`<h5>`]),
+
+    quote: function ({ cite }) {
+      if (cite == null) return this[0]();
+      let e = this[1]();
+      e.firstChild.textContent = cite;
+      e.B = e.lastChild;
+      return e;
+    }.bind([𐀶`<blockquote>`, 𐀶`<blockquote><cite></cite>:<div>`]),
+
+    table: function () {
+      let e = this();
+      e.B = e.firstChild;
+      return e;
+    }.bind(𐀶`<table><tbody>`),
+
+    table_row: 𐀶`<tr>`,
+
+    table_cell: function ({
+      header,
+      color,
+      truecolor,
+      colspan,
+      rowspan,
+      align,
+    }) {
+      let e = this[header ? 1 : 0]();
+      if (color) e.dataset.bgcolor = color;
+      if (truecolor) e.style.backgroundColor = truecolor;
+      if (colspan) e.colSpan = colspan;
+      if (rowspan) e.rowSpan = rowspan;
+      if (align) e.style.textAlign = align;
+      return e;
+    }.bind([𐀶`<td>`, 𐀶`<th>`]),
+
+    youtube: function ({ id, url }) {
+      let e = this[0]();
+
+      let close = e.lastChild;
+      let iframe;
+      let link = e.firstChild.firstChild.firstChild;
+      let create = this[1];
+      let figure = e.firstChild;
+      figure.style.background = `no-repeat center/contain url(https://i.ytimg.com/vi/${id}/mqdefault.jpg)`;
+
+      link.href = url;
+      link.textContent = url;
+
+      close.onclick = (event) => {
+        if (!iframe) return;
+        close.hidden = true;
+        iframe.src = "about:blank";
+        iframe.replaceWith(figure);
+        iframe = null;
+      };
+
+      figure.onclick = (event) => {
+        event.preventDefault();
+        if (iframe) return;
+        close.hidden = false;
+        iframe = create();
+        iframe.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1`;
+        figure.replaceWith(iframe);
+      };
+
+      return e;
+    }.bind([
+      𐀶`<youtube-embed><figure><figcaption><a target=_blank></a></figcaption></figure><button hidden>❌</button>`,
+      𐀶`<iframe referrerpolicy=no-referrer allowfullscreen>`,
+    ]),
+    x: ``,
+
+    link: function ({ url }) {
+      let e = this();
+      e.href = filter_url(url);
+      return e;
+    }.bind(𐀶`<a target=_blank href="">`),
+
+    list: function ({ style }) {
+      if (style == null) return this[0]();
+      let e = this[1]();
+      //e.style.listStyleType = style // this was only supported by old bbcode so i can probably secretly remove it.
+      return e;
+    }.bind([𐀶`<ul>`, 𐀶`<ol>`]),
+
+    list_item: 𐀶`<li>`,
+
+    align: function ({ align }) {
+      let e = this();
+      e.style.textAlign = align;
+      return e;
+    }.bind(𐀶`<div>`),
+
+    subscript: 𐀶`<sub>`,
+
+    superscript: 𐀶`<sup>`,
+
+    anchor: function ({ name }) {
+      let e = this();
+      e.name = "_anchor_" + name;
+      return e;
+    }.bind(𐀶`<a name="">`),
+
+    ruby: function ({ text }) {
+      let e = this();
+      e.lastChild.textContent = text;
+      e.B = e.firstChild;
+      return e;
+    }.bind(𐀶`<ruby><span></span><rt>`), // I don't think we need <rp> since we're rendering for modern browsers...
+
+    spoiler: function ({ label }) {
+      let e = this();
+      e.firstChild.textContent = label;
+      e.B = e.lastChild;
+      return e;
+    }.bind(𐀶`<details><summary></summary><div>`),
+
+    background_color: function ({ color }) {
+      let e = this();
+      if (color) e.dataset.bgcolor = color;
+      return e;
+    }.bind(𐀶`<span>`),
+
+    invalid: function ({ text, reason }) {
+      let e = this();
+      e.title = reason;
+      e.textContent = text;
+      return e;
+    }.bind(𐀶`<span class='invalid'>`),
+
+    key: 𐀶`<kbd>`,
+  };
+
+  function fill_branch(branch, leaves) {
+    // children
+    let prev = "newline";
+    let all_newline = true;
+    for (let leaf of leaves) {
+      if (typeof leaf == "string") {
+        all_newline = false;
+        branch.append(leaf);
+        prev = "text";
+      } else if (leaf == true) {
+        if (prev != "block") branch.append(CREATE.newline());
+        prev = "newline";
+      } else {
+        all_newline = false;
+        let create = CREATE[leaf.type];
+        if (!create) throw new RangeError("Unknown node type: " + leaf.type);
+        let node = create(leaf.args);
+        let new_branch = node.B || node;
+        branch.append(node);
+        if (leaf.content) prev = fill_branch(new_branch, leaf.content);
+        else prev = "text";
+        prev = Markup.IS_BLOCK[leaf.type] ? "block" : prev;
+      }
+    }
+    if (prev == "newline" && !all_newline) branch.append(CREATE.newline());
+
+    return prev;
+  }
+
+  Markup.render = function (
+    { args, content },
+    node = document.createDocumentFragment()
+  ) {
+    fill_branch(node, content);
+    return node;
+  };
+
+  Markup.create = CREATE;
+};

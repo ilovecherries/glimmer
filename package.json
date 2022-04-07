@@ -11,10 +11,12 @@
   },
   "dependencies": {
     "broadcast-channel": "^4.10.0",
+    "highlight.js": "^11.5.0",
     "markup2": "github:ilovecherries/markup2",
     "pinia": "^2.0.11",
     "pinia-plugin-persistedstate": "^1.5.1",
     "pinia-shared-state": "^0.1.6",
+    "simple-syntax-highlighter": "^2.2.0",
     "vue": "^3.2.31",
     "vue-router": "^4.0.12"
   },

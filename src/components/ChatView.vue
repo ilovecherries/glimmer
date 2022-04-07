@@ -14,7 +14,7 @@ const settings = useSettingsStore();
 const identity = useIdentityStore();
 
 const { commentChunks } = storeToRefs(shared);
-const { avatarSize, nickname } = storeToRefs(settings);
+const { avatarSize, nickname, ignoredUsers } = storeToRefs(settings);
 
 const props = defineProps({
   contentId: Number,
@@ -48,6 +48,10 @@ let editing = ref(0);
 let editContent = ref("");
 let $editBox = ref();
 let $chatBox = ref<null | HTMLTextAreaElement>(null);
+let imageData = ref<null | File>(null);
+let imageSrc = ref<null | string>(null);
+let imageFileUrl = ref<null | string>(null);
+let imageFileUrlEl = ref<null | HTMLInputElement>(null);
 
 async function sendMessage() {
   let msg: Partial<Comment> = {
@@ -119,8 +123,7 @@ async function deleteMessage(id: number) {
 }
 
 function upArrowEdit() {
-  console.log("hello?");
-  console.log($editBox.value);
+  if (textboxContent.value !== "") return;
   if (props.contentId && commentChunks.value[props.contentId]) {
     const room = commentChunks.value[props.contentId];
     for (let i = room.length - 1; i > 0; i--) {
@@ -131,6 +134,33 @@ function upArrowEdit() {
         return;
       }
     }
+  }
+}
+
+async function uploadImage() {
+  try {
+    const formData = new FormData();
+    for (let value of formData.values()) {
+      console.log(value);
+    }
+    console.log(imageData.value)
+    formData.append("file", imageData.value as Blob);
+    console.log(formData)
+    const res = await fetch(`https://${API_DOMAIN}/api/File`, {
+      method: "post",
+      headers: identity.emptyHeaders,
+      body: formData,
+    });
+    const data: any = await res.json();
+    const hash = data.hash as string;
+    const url = `!https://${API_DOMAIN}/api/File/raw/${hash}`;
+    imageFileUrl.value = url;
+    nextTick(() => {
+      imageFileUrlEl.value?.focus();
+      imageFileUrlEl.value?.select();
+    });
+  } catch (e) {
+    console.error(e);
   }
 }
 
@@ -162,6 +192,24 @@ onUpdated(() => {
     }
   });
 });
+
+function detectImagePaste(event: ClipboardEvent) {
+  if (event.clipboardData) {
+    const item = event.clipboardData.files[0];
+    imageData.value = item;
+  }
+}
+
+watch(imageData, () => {
+  if (imageData.value) {
+    var reader = new FileReader();
+    reader.onload = function (event) {
+      imageFileUrl.value = null;
+      imageSrc.value = (event.target!.result as string);
+    };
+    reader.readAsDataURL(imageData.value);
+  }
+});
 </script>
 
 <template>
@@ -170,6 +218,7 @@ onUpdated(() => {
       <div
         v-for="c in commentChunks[props.contentId!]"
         :key="c.firstId"
+        v-show="ignoredUsers.findIndex((x) => x === c.uid) == -1"
         class="flex mx-1 my-2"
       >
         <img :src="avatarUrl(c.avatar, avatarSize)" class="w-12 h-12 mx-1" />
@@ -231,14 +280,54 @@ onUpdated(() => {
       </div>
       <div ref="$scrollToBottom"></div>
     </div>
-    <div class="h-12 w-full" v-if="showChatBox">
-      <textarea
-        @keydown.enter.exact.prevent="sendMessage"
-        @keydown.up.exact.prevent="upArrowEdit"
-        v-model="textboxContent"
-        ref="$chatBox"
-        class="block h-full w-full p-1 chat-box resize-none"
-      />
+    <div class="h-12 w-full relative">
+      <div
+        v-if="imageSrc"
+        class="absolute top-0 right-4 w-60 bg-white m-1 -translate-y-full box-border"
+      >
+        <img :src="imageSrc" alt="" class="img-upload-view w-full h-auto p-1" />
+        <div v-show="imageFileUrl">
+          <input
+            type="text"
+            class="w-full"
+            ref="imageFileUrlEl"
+            :value="imageFileUrl"
+            @blur="
+              imageSrc = null;
+              imageData = null;
+            "
+            readonly
+          />
+        </div>
+        <div v-if="!imageFileUrl">
+          <button class="mx-1" @click="uploadImage">Upload</button>
+          <button
+            class="mx-1"
+            @click="
+              imageSrc = null;
+              imageData = null;
+            "
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+      <div class="h-12 w-full" v-if="showChatBox">
+        <textarea
+          @keydown.enter.exact.prevent="sendMessage"
+          @keydown.up.exact.prevent="upArrowEdit"
+          @paste="detectImagePaste"
+          v-model="textboxContent"
+          ref="$chatBox"
+          class="block h-full w-full p-1 chat-box resize-none"
+        />
+      </div>
     </div>
   </div>
 </template>
+
+<style>
+.img-upload-view {
+  image-rendering: pixelated;
+} 
+</style>

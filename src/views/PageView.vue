@@ -11,6 +11,7 @@ import { storeToRefs } from "pinia";
 import { nextTick, watch, watchEffect } from "vue";
 import MarkupRender from "../components/MarkupRender.vue";
 import ChatView from "../components/ChatView.vue";
+import type { RequestData } from "@/lib/qcs/types/RequestData";
 
 const identity = useIdentityStore();
 const state = useStateStore();
@@ -68,38 +69,44 @@ watchEffect(async () => {
     }
     try {
       const search = BasicPageDisplaySearch(id);
-      let headers = {
-        "Content-Type": "application/json",
+      const pageAction = (data: RequestData) => {
+        const page = data.content?.shift();
+        if (page) {
+          headerText.value = page.name;
+          contents.value[id] = {
+            data: page,
+            state: ContentState.full,
+          };
+          const users = data.user;
+          users?.map((x) => {
+            shared.users[x.id] = x;
+          });
+          const messages = data.message;
+          if (messages) {
+            shared.comments = shared.comments.concat(messages);
+            shared.sortComments();
+            shared.rebuildCommentChunks(id);
+            shared.rebuildActivityChunks();
+          }
+        } else {
+          throw new Error("Page wasn't returned from the API.");
+        }
       };
       if (loggedIn.value) {
-        headers = identity.headers;
-      }
-      const pageReq = await fetch(`https://${API_DOMAIN}/api/Request`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify(search),
-      });
-      const pageJson: SearchResult = await pageReq.json();
-      const page = pageJson.data.content?.shift();
-      if (page) {
-        headerText.value = page.name;
-        contents.value[id] = {
-          data: page,
-          state: ContentState.full,
-        };
-        const users = pageJson.data.user;
-        users?.map((x) => {
-          shared.users[x.id] = x;
+        websocket.sendRequest(search, (res) => {
+          console.log("websocket page load")
+          pageAction(res.data.data as RequestData);
         });
-        const messages = pageJson.data.message;
-        if (messages) {
-          shared.comments = shared.comments.concat(messages);
-          shared.sortComments();
-          shared.rebuildCommentChunks(id);
-          shared.rebuildActivityChunks();
-        }
       } else {
-        throw new Error("Page wasn't returned from the API.");
+        const pageReq = await fetch(`https://${API_DOMAIN}/api/Request`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(search),
+        });
+        const pageJson: SearchResult = await pageReq.json();
+        pageAction(pageJson.data);
       }
     } catch (err) {
       console.error(err);

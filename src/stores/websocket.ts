@@ -11,7 +11,7 @@ import {
 import { BroadcastChannel, createLeaderElection } from "broadcast-channel";
 import { defineStore } from "pinia";
 import { ContentState, useSharedStore } from "./shared";
-import { uniqueIdGen } from "./state";
+import { uniqueIdGen, useStateStore } from "./state";
 
 const channel = new BroadcastChannel("glimmer-ws");
 const elector = createLeaderElection(channel);
@@ -72,6 +72,7 @@ export const useWebsocketStore = defineStore({
         this.websocket = getWebSocket(token, this.lastId);
 
         const shared = useSharedStore();
+        const state = useStateStore();
 
         this.websocket.onclose = () => {
           this.start(token);
@@ -87,10 +88,6 @@ export const useWebsocketStore = defineStore({
               case WebsocketResultType.Live: {
                 if (res.data.lastId) this.lastId = res.data.lastId;
                 const data = res.data.data.message as RequestData;
-                // FIXME: the problem with this is that the content comes back
-                // incomplete, so we cannot rely on this being a full object,
-                // we'll have to find a way to make it so it knows it has to
-                // be patched later on
                 data.content?.map((x) => {
                   if (shared.contents[x.id])
                     Object.assign(shared.contents[x.id].data, x);
@@ -108,17 +105,17 @@ export const useWebsocketStore = defineStore({
 
                 const events = res.data.events;
                 events?.map((e) => {
-                  if (e.type === WebsocketEventType.Message) {
+                  if (e.type === WebsocketEventType.message) {
                     const x = data.message?.find((x) => x.id === e.refId);
                     if (x)
                       switch (e.action) {
-                        case WebsocketEventAction.Create:
+                        case WebsocketEventAction.create:
                           shared.addComment(x);
                           break;
-                        case WebsocketEventAction.Delete:
+                        case WebsocketEventAction.delete:
                           shared.deleteComment(x);
                           break;
-                        case WebsocketEventAction.Update:
+                        case WebsocketEventAction.update:
                           shared.editComment(x);
                           break;
                       }
@@ -158,7 +155,7 @@ export const useWebsocketStore = defineStore({
                 if (this.errorHandler) this.errorHandler(res);
                 break;
               case WebsocketResultType.Request:
-                this.requestResults.set(res.id!, res.data);
+                shared.wsResultStore[res.id!] = res;
                 break;
               case WebsocketResultType.LastId:
                 this.ready = true;
@@ -168,23 +165,28 @@ export const useWebsocketStore = defineStore({
                   "This event type for websockets isn't tracked yet!"
                 );
             }
-            if (this.requests.has(res.id!)) {
-              const callback = this.requests.get(res.id!);
-              if (callback) {
-                callback(res);
-              }
-            }
           } catch (err) {
             console.error(err);
           }
         };
       });
     },
-    sendMessage(data: any, callback: ListenerFunc) {
+    sendRequest(data: any, callback: ListenerFunc) {
       this.whenReady(() => {
         const id = uniqueIdGen();
-        this.requests.set(id, callback);
-        this.websocket!.send(JSON.stringify(data));
+        const req = {
+          id,
+          data,
+          type: "request",
+        } as WebsocketRequest;
+        const shared = useSharedStore();
+        const x = () => {
+          const data = shared.getRequestData(id);
+          if (data) callback(data);
+          else setTimeout(x, 30);
+        };
+        this.websocket!.send(JSON.stringify(req));
+        setTimeout(x, 30);
       });
     },
     stop() {

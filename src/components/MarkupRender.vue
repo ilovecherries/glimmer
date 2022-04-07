@@ -2,7 +2,7 @@
 import { ref, watchEffect } from "vue";
 
 import { Markup } from "markup2/parse";
-import "markup2/render";
+import "@/lib/qcs/markupRender";
 import "markup2/legacy";
 
 const props = defineProps({

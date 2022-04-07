@@ -2,7 +2,7 @@ import type { User } from "@/lib/qcs/types/User";
 import type { Comment } from "@/lib/qcs/types/Comment";
 import { defineStore } from "pinia";
 import type { Content } from "@/lib/qcs/types/Content";
-import type { StatusData } from "@/lib/qcs/types/WebsocketResult";
+import type { StatusData, WebsocketResult } from "@/lib/qcs/types/WebsocketResult";
 
 export type UserStatus = {
   id: number;
@@ -61,6 +61,10 @@ export type ContentContainer = {
   [key: number]: ContentBox;
 };
 
+export type WebsocketResultContainer = {
+  [key: string]: WebsocketResult;
+};
+
 export type SharedStoreState = {
   contents: ContentContainer;
   comments: Array<Comment>;
@@ -69,6 +73,7 @@ export type SharedStoreState = {
   users: UserContainer;
   userlists: UserlistContainer;
   myStatuses: StatusData;
+  wsResultStore: WebsocketResultContainer;
 };
 
 export const useSharedStore = defineStore({
@@ -82,7 +87,7 @@ export const useSharedStore = defineStore({
       users: {},
       userlists: {},
       myStatuses: {},
-      runningWs: false,
+      wsResultStore: {},
     } as SharedStoreState;
   },
   actions: {
@@ -243,6 +248,14 @@ export const useSharedStore = defineStore({
         this.editInChunks(room, comment);
         this.editInChunks(this.activityChunks, comment);
       }
+    },
+    getRequestData(requestId: string): undefined | WebsocketResult {
+      if (this.wsResultStore[requestId]) {
+        const data = Object.assign({}, this.wsResultStore[requestId]);
+        delete this.wsResultStore[requestId];
+        return data;
+      }
+      return undefined;
     },
   },
   share: {
