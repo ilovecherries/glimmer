@@ -17,13 +17,14 @@ export enum WebsocketEventAction {
 }
 
 export enum WebsocketEventType {
-  none = 0,
-  message = 1,
-  activity = 2,
-  watch = 3,
-  uservariable = 4,
-  user = 5,
-  userlist = 6,
+  none = "none",
+  message = "message",
+  activity = "activity",
+  watch = "watch",
+  uservariable = "uservariable",
+  user = "user",
+  userlist = "userlist",
+  messageAggregate = "message_aggregate",
 }
 
 export type WebsocketEvent = {

@@ -8,13 +8,19 @@ import MarkupRender from "./MarkupRender.vue";
 import { API_DOMAIN } from "@/lib/qcs/qcs";
 import { useIdentityStore } from "@/stores/identity";
 import type { Comment } from "@/lib/qcs/types/Comment";
+import { RequestParameter } from "@/lib/qcs/types/RequestParameter";
+import { RequestSearchParameter } from "@/lib/qcs/types/RequestSearchParameter";
+import { useWebsocketStore } from "@/stores/websocket";
+import type { RequestData } from "@/lib/qcs/types/RequestData";
 
 const shared = useSharedStore();
 const settings = useSettingsStore();
 const identity = useIdentityStore();
+const websocket = useWebsocketStore();
 
 const { commentChunks } = storeToRefs(shared);
-const { avatarSize, nickname, ignoredUsers } = storeToRefs(settings);
+const { avatarSize, nickname, ignoredUsers, commentPagination, markup } =
+  storeToRefs(settings);
 
 const props = defineProps({
   contentId: Number,
@@ -48,17 +54,22 @@ let editing = ref(0);
 let editContent = ref("");
 let $editBox = ref();
 let $chatBox = ref<null | HTMLTextAreaElement>(null);
+let $messages = ref<null | Array<HTMLDivElement>>(null);
+
 let imageData = ref<null | File>(null);
 let imageSrc = ref<null | string>(null);
 let imageFileUrl = ref<null | string>(null);
 let imageFileUrlEl = ref<null | HTMLInputElement>(null);
+
+let shouldScroll = false;
+const SCROLL_RANGE = 50;
 
 async function sendMessage() {
   let msg: Partial<Comment> = {
     text: textboxContent.value.trim(),
     contentId: props.contentId!,
     values: {
-      m: "12y",
+      m: markup.value,
       a: identity.avatar,
     },
   };
@@ -68,6 +79,7 @@ async function sendMessage() {
   }
 
   try {
+    shouldScroll = true;
     const req = await fetch(`https://${API_DOMAIN}/api/Write/message`, {
       method: "POST",
       headers: identity.headers,
@@ -77,6 +89,11 @@ async function sendMessage() {
   } catch (e) {
     console.error(e);
   }
+}
+
+function stopEdit() {
+  editing.value = -1;
+  editContent.value = "";
 }
 
 async function editMessage() {
@@ -91,7 +108,8 @@ async function editMessage() {
     text: editContent.value.trim(),
     contentId: props.contentId!,
     values: {
-      m: "12y",
+      m: markup.value,
+      a: identity.avatar,
     },
   };
 
@@ -105,7 +123,7 @@ async function editMessage() {
       headers: identity.headers,
       body: JSON.stringify(msg),
     });
-    editing.value = -1;
+    stopEdit();
   } catch (e) {
     console.error(e);
   }
@@ -143,9 +161,9 @@ async function uploadImage() {
     for (let value of formData.values()) {
       console.log(value);
     }
-    console.log(imageData.value)
+    console.log(imageData.value);
     formData.append("file", imageData.value as Blob);
-    console.log(formData)
+    console.log(formData);
     const res = await fetch(`https://${API_DOMAIN}/api/File`, {
       method: "post",
       headers: identity.emptyHeaders,
@@ -164,6 +182,33 @@ async function uploadImage() {
   }
 }
 
+function loadOlderMessages() {
+  if (props.contentId) {
+    const minId = commentChunks.value[props.contentId][0].comments[0].id;
+    const search = new RequestParameter(
+      { pid: props.contentId, maxId: minId },
+      [
+        new RequestSearchParameter(
+          "message",
+          "*",
+          "contentId = @pid and id < @maxId and !notdeleted()",
+          "id_desc",
+          commentPagination.value
+        ),
+        new RequestSearchParameter("user", "*", "id in @message.createUserId"),
+      ]
+    );
+    websocket.sendRequest(search, (res) => {
+      const data = res.data.data as RequestData;
+      data.user?.map((x) => shared.addUser(x));
+      data.message?.map((x) => shared.addComment(x));
+      shared.sortComments();
+      shared.rebuildCommentChunks(props.contentId!);
+      shared.rebuildActivityChunks();
+    });
+  }
+}
+
 watch(editing, () => {
   if (editing.value && editing.value !== -1) {
     nextTick(() => {
@@ -179,23 +224,24 @@ watch(
   () => props.contentId,
   () => {
     editing.value = 0;
+    if (props.contentId && shared.notifications[props.contentId]) {
+      shared.notifications[props.contentId].count = 0;
+    }
+    shouldScroll = true;
   }
 );
-
-onUpdated(() => {
-  nextTick(() => {
-    if ($scrollToBottom.value) {
-      $scrollToBottom.value.scrollIntoView({
-        behavior: "smooth",
-        block: "end",
-      });
-    }
-  });
-});
 
 function detectImagePaste(event: ClipboardEvent) {
   if (event.clipboardData) {
     const item = event.clipboardData.files[0];
+    imageData.value = item;
+  }
+}
+
+function detectImageDrop(event: DragEvent) {
+  event.preventDefault();
+  if (event.dataTransfer) {
+    const item = event.dataTransfer.files[0];
     imageData.value = item;
   }
 }
@@ -205,21 +251,67 @@ watch(imageData, () => {
     var reader = new FileReader();
     reader.onload = function (event) {
       imageFileUrl.value = null;
-      imageSrc.value = (event.target!.result as string);
+      imageSrc.value = event.target!.result as string;
     };
     reader.readAsDataURL(imageData.value);
   }
 });
+
+const resizeObserver = new ResizeObserver((entries) => {
+  for (const entry of entries) {
+    if (entry.contentBoxSize) {
+      if (shouldScroll) {
+        nextTick(() => {
+          if ($scrollToBottom.value) {
+            $scrollToBottom.value.scrollIntoView({
+              behavior: "smooth",
+              block: "end",
+            });
+          }
+        });
+        if (props.contentId && shared.notifications[props.contentId]) {
+          shared.notifications[props.contentId].count = 0;
+        }
+      }
+    }
+  }
+});
+
+let $chatContainer = ref<HTMLDivElement | null>(null);
+watch($chatContainer, () => {
+  if ($chatContainer.value) {
+    resizeObserver.observe($chatContainer.value);
+  }
+});
+
+function updateScroll() {
+  if ($chatContainer.value) {
+    const scrolled =
+      $chatContainer.value.scrollHeight - $chatContainer.value.scrollTop;
+    const height = $chatContainer.value.clientHeight;
+    shouldScroll = scrolled <= height + SCROLL_RANGE;
+  }
+}
 </script>
 
 <template>
   <div class="flex flex-col grow h-full">
-    <div class="overflow-y-scroll grow h-full">
+    <div
+      class="overflow-y-scroll grow h-full"
+      ref="$chatContainer"
+      @scroll="updateScroll"
+    >
+      <button @click="loadOlderMessages">LOAD OLDER MESSAGES</button>
       <div
         v-for="c in commentChunks[props.contentId!]"
         :key="c.firstId"
         v-show="ignoredUsers.findIndex((x) => x === c.uid) == -1"
         class="flex mx-1 my-2"
+        :ref="
+          (el) => {
+            if (el) resizeObserver.observe(el as Element);
+          }
+        "
       >
         <img :src="avatarUrl(c.avatar, avatarSize)" class="w-12 h-12 mx-1" />
         <div class="grow">
@@ -263,7 +355,7 @@ watch(imageData, () => {
               <textarea
                 v-model="editContent"
                 @keydown.enter.exact.prevent="editMessage"
-                @keydown.escape.exact.prevent="editing = -1"
+                @keydown.escape.exact.prevent="stopEdit"
                 :ref="
                   (el) => {
                     if (editing === m.id) {
@@ -273,8 +365,13 @@ watch(imageData, () => {
                 "
                 class="w-full chat-box resize-none p-1"
               ></textarea>
+              <button class="mx-1" @click="stopEdit">CANCEL</button>
             </div>
-            <MarkupRender v-else :content="m.text" />
+            <MarkupRender
+              v-else
+              :content="m.text"
+              :lang="m.values.m || 'plaintext'"
+            />
           </div>
         </div>
       </div>
@@ -317,6 +414,7 @@ watch(imageData, () => {
           @keydown.enter.exact.prevent="sendMessage"
           @keydown.up.exact.prevent="upArrowEdit"
           @paste="detectImagePaste"
+          @drop="detectImageDrop"
           v-model="textboxContent"
           ref="$chatBox"
           class="block h-full w-full p-1 chat-box resize-none"
@@ -329,5 +427,6 @@ watch(imageData, () => {
 <style>
 .img-upload-view {
   image-rendering: pixelated;
-} 
+}
+
 </style>

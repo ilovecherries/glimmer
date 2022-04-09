@@ -1,5 +1,7 @@
-import { API_DOMAIN } from "@/lib/qcs/qcs";
+import { API_DOMAIN, GetSearchBackDate } from "@/lib/qcs/qcs";
 import type { RequestData } from "@/lib/qcs/types/RequestData";
+import { RequestParameter } from "@/lib/qcs/types/RequestParameter";
+import { RequestSearchParameter } from "@/lib/qcs/types/RequestSearchParameter";
 import type { WebsocketRequest } from "@/lib/qcs/types/WebsocketRequest";
 import {
   WebsocketEventAction,
@@ -74,6 +76,59 @@ export const useWebsocketStore = defineStore({
         const shared = useSharedStore();
         const state = useStateStore();
 
+        if (!shared.messageInitialLoad) {
+          const search = new RequestParameter(
+            {
+              yesterday: GetSearchBackDate(24),
+            },
+            [
+              new RequestSearchParameter(
+                "message_aggregate",
+                "contentId,count,maxId,minId,createUserId,maxCreateDate",
+                "createDate > @yesterday"
+              ),
+              new RequestSearchParameter(
+                "content",
+                "~values,keywords,votes,text,commentCount",
+                "id in @message_aggregate.contentId"
+              ),
+            ]
+          );
+          this.sendRequest(search, (res) => {
+            console.log("MESSAGE AGGREGATE", res);
+            const data = res.data.data as RequestData;
+            data.content?.map((x) => {
+              if (shared.contents[x.id])
+                Object.assign(shared.contents[x.id], x);
+              else {
+                shared.contents[x.id] = {
+                  data: x,
+                  state: ContentState.partial,
+                };
+              }
+            });
+            data.message_aggregate?.map((x) => {
+              const id = x.contentId;
+              if (!shared.notifications[id])
+                shared.notifications[id] = {
+                  contentId: id,
+                  lastCommentDate: x.maxCreateDate,
+                  count: x.count,
+                };
+              else {
+                const lastDate =
+                  shared.notifications[id].lastCommentDate;
+                if (new Date(lastDate) < new Date(x.maxCreateDate)) {
+                  shared.notifications[id].lastCommentDate =
+                    x.maxCreateDate;
+                }
+                shared.notifications[id].count += x.count;
+              }
+            });
+            shared.messageInitialLoad = true;
+          });
+        }
+
         this.websocket.onclose = () => {
           this.start(token);
         };
@@ -98,10 +153,7 @@ export const useWebsocketStore = defineStore({
                     };
                   }
                 });
-                data.user?.map((x) => {
-                  if (shared.users[x.id]) Object.assign(shared.users[x.id], x);
-                  else shared.users[x.id] = x;
-                });
+                data.user?.map((x) => shared.addUser(x));
 
                 const events = res.data.events;
                 events?.map((e) => {
@@ -147,7 +199,6 @@ export const useWebsocketStore = defineStore({
                 }
                 console.log("uwu");
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-
                 break;
               }
               case WebsocketResultType.BadToken:

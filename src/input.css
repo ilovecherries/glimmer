@@ -2,7 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: RobotoRegular;
+  src: url("./fonts/Roboto-Regular.ttf");
+}
+
 body, #app {
+  font-family: RobotoRegular;
   position: fixed;
   overflow: hidden;
   top: 0;

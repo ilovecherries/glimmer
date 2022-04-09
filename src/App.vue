@@ -32,7 +32,7 @@ watchEffect(() => {
 </script>
 
 <template>
-  <div class="h-full flex flex-col">
+  <div class="h-full flex flex-col dark dark:bg-slate-900">
     <header class="flex">
       <div>
         <img

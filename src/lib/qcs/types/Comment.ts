@@ -1,3 +1,10 @@
+export enum CommentMarkup {
+  _12y = "12y",
+  _12y2 = "12y2",
+  bbcode = "bbcode",
+  plaintext = "plaintext",
+}
+
 export type CommentValues = {
   m?: string;
   n?: string;

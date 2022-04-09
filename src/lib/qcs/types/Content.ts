@@ -1,6 +1,7 @@
 export type ContentValues = {
-  markupLang: string;
-  photos: Array<string>;
+  markupLang?: string;
+  photos?: Array<string>;
+  thumbnail?: string;
 };
 
 export type ContentVotes = {
@@ -29,7 +30,7 @@ export type Content = {
   parentId: number;
   permissions: Map<number, string>;
   text: string;
-  values: ContentValues;
+  values?: ContentValues;
   votes: ContentVotes;
   watchCount: number;
 };

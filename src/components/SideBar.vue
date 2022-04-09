@@ -5,7 +5,8 @@ import { storeToRefs } from "pinia";
 import { avatarUrl } from "@/lib/qcs/types/User";
 import { useSettingsStore } from "@/stores/settings";
 import { useStateStore } from "@/stores/state";
-import { nextTick, onUpdated, ref } from "@vue/runtime-dom";
+import { nextTick, onUpdated, ref, watchEffect } from "@vue/runtime-dom";
+import type { Notification } from "@/stores/shared";
 
 const identity = useIdentityStore();
 const shared = useSharedStore();
@@ -14,13 +15,14 @@ const state = useStateStore();
 
 const { loggedIn, username, avatar } = storeToRefs(identity);
 const { login, logout } = identity;
-const { contents, activityChunks, users } = storeToRefs(shared);
+const { contents, activityChunks, users, notifications } = storeToRefs(shared);
 const { avatarSize, activityDisplayUsername, nickname } = storeToRefs(settings);
 const { openSidebar } = storeToRefs(state);
 
 let formUsername = "",
   formPassword = "";
 let $scrollToBottom = ref<HTMLDivElement | null>(null);
+let notificationsView = ref<Array<Notification>>([]);
 
 function signIn(username: string, password: string) {
   login(username, password);
@@ -35,6 +37,20 @@ function scroll() {
     }
   });
 }
+
+watchEffect(() => {
+  if (notifications.value) {
+    const notifs: Array<Notification> = Object.values(notifications.value);
+    notifs.sort((a, b) => {
+      const aDate = new Date(a.lastCommentDate);
+      const bDate = new Date(b.lastCommentDate);
+      if (aDate > bDate) return -1;
+      else if (bDate > aDate) return 1;
+      else return 0;
+    });
+    notificationsView.value = notifs;
+  }
+});
 
 onUpdated(() => {
   scroll();
@@ -65,7 +81,28 @@ onUpdated(() => {
         </div>
         <button @click="signIn(formUsername, formPassword)">Log in</button>
       </div>
-      <hr />
+      <div>
+        <router-link
+          v-for="n in notificationsView"
+          :key="n.contentId"
+          class="flex px-1 py-2 box-border"
+          :to="`/page/${n.contentId}`"
+        >
+          <div class="grow">
+            <!-- <img
+              :src="
+                avatarUrl(contents[n.contentId].data.values?.thumbnail || '')
+              "
+              alt=""
+            /> -->
+            {{ contents[n.contentId].data.name }}
+          </div>
+          <div v-if="n.count">
+            {{ n.count }}
+          </div>
+        </router-link>
+      </div>
+      <div class="h-4 bg-slate-600"></div>
       <div class="grow overflow-y-scroll">
         <div>
           <div v-for="a in activityChunks" :key="a.firstId">
@@ -80,13 +117,18 @@ onUpdated(() => {
               :key="c.id"
             >
               <img
-                :src="avatarUrl(users[c.createUserId].avatar, avatarSize)"
+                :src="
+                  avatarUrl(
+                    c.values.a || users[c.createUserId].avatar,
+                    avatarSize
+                  )
+                "
                 :alt="`${users[c.createUserId].username}'s avatar`"
                 class="w-6 h-6 p-1 inline"
                 :title="users[c.createUserId].username"
               />
               <div class="inline" v-if="activityDisplayUsername">
-                {{ users[c.createUserId].username }}:
+                {{ c.values.n || users[c.createUserId].username }}:
               </div>
               <div class="grow inline">{{ c.text }}</div>
             </div>

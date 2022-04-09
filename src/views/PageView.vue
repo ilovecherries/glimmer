@@ -88,6 +88,14 @@ watchEffect(async () => {
             shared.rebuildCommentChunks(id);
             shared.rebuildActivityChunks();
           }
+          const clearNotif = () => {
+            if (shared.messageInitialLoad) {
+              if (props.id && shared.notifications[parseInt(props.id)]) {
+              shared.notifications[parseInt(props.id)].count = 0;
+              }
+            } else setTimeout(clearNotif, 20);
+          };
+          clearNotif();
         } else {
           throw new Error("Page wasn't returned from the API.");
         }
@@ -126,7 +134,8 @@ watch(commentChunks.value, () => {
             document.title = lastComment.text;
             changeFavicon(
               avatarUrl(
-                users.value[lastComment.createUserId].avatar,
+                lastComment.values?.a ||
+                  users.value[lastComment.createUserId].avatar,
                 avatarSize.value
               )
             );
@@ -167,10 +176,6 @@ watch(commentChunks.value, () => {
 </template>
 
 <style>
-.chat-content:after {
-  content: ".";
-  visibility: hidden;
-}
 
 .chat-box {
   box-shadow: inset 0px 0px 0px 1px rgb(0, 20, 80);
