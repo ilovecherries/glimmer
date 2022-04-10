@@ -18,13 +18,13 @@ export enum WebsocketEventAction {
 
 export enum WebsocketEventType {
   none = "none",
-  message = "message",
-  activity = "activity",
-  watch = "watch",
-  uservariable = "uservariable",
-  user = "user",
-  userlist = "userlist",
-  messageAggregate = "message_aggregate",
+  message = "message_event",
+  activity = "activity_event",
+  watch = "watch_event",
+  uservariable = "uservariable_event",
+  user = "user_event",
+  userlist = "userlist_event",
+  messageAggregate = "message_aggregate_event",
 }
 
 export type WebsocketEvent = {
@@ -36,9 +36,9 @@ export type WebsocketEvent = {
   userId: number;
 };
 
-export type WebsocketMessage = {
-  message?: RequestData;
-};
+export interface WebsocketMessage extends RequestData {
+  message_event: RequestData;
+}
 
 export type StatusData = {
   [key: number]: string;
@@ -49,7 +49,7 @@ export type StatusDataContainer = {
 };
 
 export type WebsocketData = {
-  data: WebsocketMessage | RequestData;
+  objects: WebsocketMessage;
   events?: Array<WebsocketEvent>;
   lastId?: number;
   optimized?: boolean;

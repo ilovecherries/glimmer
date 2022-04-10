@@ -96,7 +96,7 @@ export const useWebsocketStore = defineStore({
           );
           this.sendRequest(search, (res) => {
             console.log("MESSAGE AGGREGATE", res);
-            const data = res.data.data as RequestData;
+            const data = res.data.objects;
             data.content?.map((x) => {
               if (shared.contents[x.id])
                 Object.assign(shared.contents[x.id], x);
@@ -116,11 +116,9 @@ export const useWebsocketStore = defineStore({
                   count: x.count,
                 };
               else {
-                const lastDate =
-                  shared.notifications[id].lastCommentDate;
+                const lastDate = shared.notifications[id].lastCommentDate;
                 if (new Date(lastDate) < new Date(x.maxCreateDate)) {
-                  shared.notifications[id].lastCommentDate =
-                    x.maxCreateDate;
+                  shared.notifications[id].lastCommentDate = x.maxCreateDate;
                 }
                 shared.notifications[id].count += x.count;
               }
@@ -142,7 +140,7 @@ export const useWebsocketStore = defineStore({
             switch (res.type) {
               case WebsocketResultType.Live: {
                 if (res.data.lastId) this.lastId = res.data.lastId;
-                const data = res.data.data.message as RequestData;
+                const data = res.data.objects.message_event;
                 data.content?.map((x) => {
                   if (shared.contents[x.id])
                     Object.assign(shared.contents[x.id].data, x);
@@ -178,7 +176,7 @@ export const useWebsocketStore = defineStore({
               // eslint-disable-next-line no-fallthrough
               case WebsocketResultType.UserlistUpdate: {
                 const data = res.data;
-                (data.data as RequestData).content?.map((x) => {
+                (data.objects as RequestData).content?.map((x) => {
                   if (shared.contents[x.id])
                     Object.assign(shared.contents[x.id], x);
                   else {
@@ -188,7 +186,7 @@ export const useWebsocketStore = defineStore({
                     };
                   }
                 });
-                (data.data as RequestData).user?.map((x) => {
+                (data.objects as RequestData).user?.map((x) => {
                   if (shared.users[x.id]) Object.assign(shared.users[x.id], x);
                   else shared.users[x.id] = x;
                 });
