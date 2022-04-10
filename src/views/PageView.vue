@@ -102,8 +102,7 @@ watchEffect(async () => {
       };
       if (loggedIn.value) {
         websocket.sendRequest(search, (res) => {
-          console.log("websocket page load")
-          pageAction(res.data.data as RequestData);
+          pageAction(res.data.objects);
         });
       } else {
         const pageReq = await fetch(`https://${API_DOMAIN}/api/Request`, {

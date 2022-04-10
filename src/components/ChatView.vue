@@ -199,7 +199,7 @@ function loadOlderMessages() {
       ]
     );
     websocket.sendRequest(search, (res) => {
-      const data = res.data.data as RequestData;
+      const data = res.data.objects;
       data.user?.map((x) => shared.addUser(x));
       data.message?.map((x) => shared.addComment(x));
       shared.sortComments();
