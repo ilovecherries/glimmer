@@ -39,16 +39,6 @@ function scroll() {
   });
 }
 
-document.addEventListener("visibilitychange", () => {
-  if (!document.hidden) {
-    scroll();
-  }
-});
-
-window.addEventListener("resize", () => {
-  scroll();
-});
-
 let textboxContent = ref("");
 let editing = ref(0);
 let editContent = ref("");
@@ -62,7 +52,17 @@ let imageFileUrl = ref<null | string>(null);
 let imageFileUrlEl = ref<null | HTMLInputElement>(null);
 
 let shouldScroll = false;
+let scrollOnVisibility = false;
 const SCROLL_RANGE = 50;
+
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden && shouldScroll) {
+    scrollOnVisibility = true;
+  } else if (!document.hidden && scrollOnVisibility) {
+    scroll();
+    scrollOnVisibility = false;
+  }
+});
 
 async function sendMessage() {
   let msg: Partial<Comment> = {
@@ -313,9 +313,12 @@ function updateScroll() {
           }
         "
       >
-        <img :src="avatarUrl(c.avatar, avatarSize)" class="w-12 h-12 mx-1" />
+        <img
+          :src="avatarUrl(c.avatar, avatarSize)"
+          class="w-12 h-12 mx-1 mr-2 rounded border border-black"
+        />
         <div class="grow">
-          <div class="flex">
+          <div class="flex mb-1">
             <div class="grow">
               <span v-if="c.nickname">
                 {{ c.nickname }} ({{ c.username }}):
@@ -328,7 +331,7 @@ function updateScroll() {
           </div>
           <div
             v-for="m in c.comments"
-            class="group chat-content my-0.5 grow hover:bg-gray-200 relative"
+            class="group chat-content my-0.5 grow hover:bg-gray-200 relative mb-1"
             :key="m.id"
           >
             <div

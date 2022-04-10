@@ -5,8 +5,9 @@ import { storeToRefs } from "pinia";
 import { avatarUrl } from "@/lib/qcs/types/User";
 import { useSettingsStore } from "@/stores/settings";
 import { useStateStore } from "@/stores/state";
-import { nextTick, onUpdated, ref, watchEffect } from "@vue/runtime-dom";
+import { ref, watchEffect } from "@vue/runtime-dom";
 import type { Notification } from "@/stores/shared";
+import ActivityLogPane from "./sidebar/ActivityLogPane.vue";
 
 const identity = useIdentityStore();
 const shared = useSharedStore();
@@ -15,32 +16,23 @@ const state = useStateStore();
 
 const { loggedIn, username, avatar } = storeToRefs(identity);
 const { login, logout } = identity;
-const { contents, activityChunks, users, notifications } = storeToRefs(shared);
-const { avatarSize, activityDisplayUsername, nickname } = storeToRefs(settings);
+const { contents, notifications } = storeToRefs(shared);
+const { avatarSize, nickname } = storeToRefs(settings);
 const { openSidebar } = storeToRefs(state);
 
 let formUsername = "",
   formPassword = "";
-let $scrollToBottom = ref<HTMLDivElement | null>(null);
 let notificationsView = ref<Array<Notification>>([]);
 
 function signIn(username: string, password: string) {
   login(username, password);
 }
 
-function scroll() {
-  nextTick(() => {
-    if ($scrollToBottom.value) {
-      $scrollToBottom.value.scrollIntoView({
-        block: "end",
-      });
-    }
-  });
-}
-
 watchEffect(() => {
   if (notifications.value) {
-    const notifs: Array<Notification> = Object.values(notifications.value);
+    const notifs: Array<Notification> = Object.keys(notifications.value).map(
+      (n: string) => notifications.value[parseInt(n)]
+    );
     notifs.sort((a, b) => {
       const aDate = new Date(a.lastCommentDate);
       const bDate = new Date(b.lastCommentDate);
@@ -50,10 +42,6 @@ watchEffect(() => {
     });
     notificationsView.value = notifs;
   }
-});
-
-onUpdated(() => {
-  scroll();
 });
 </script>
 
@@ -104,37 +92,7 @@ onUpdated(() => {
       </div>
       <div class="h-4 bg-slate-600"></div>
       <div class="grow overflow-y-scroll">
-        <div>
-          <div v-for="a in activityChunks" :key="a.firstId">
-            <div class="text-xl activity-bar">
-              <router-link :to="`/page/${a.contentId}`">
-                {{ contents[a.contentId].data.name }}
-              </router-link>
-            </div>
-            <div
-              v-for="c in a.comments"
-              class="flex activity-bar overflow-hidden whitespace-pre text-ellipsis"
-              :key="c.id"
-            >
-              <img
-                :src="
-                  avatarUrl(
-                    c.values.a || users[c.createUserId].avatar,
-                    avatarSize
-                  )
-                "
-                :alt="`${users[c.createUserId].username}'s avatar`"
-                class="w-6 h-6 p-1 inline"
-                :title="users[c.createUserId].username"
-              />
-              <div class="inline" v-if="activityDisplayUsername">
-                {{ c.values.n || users[c.createUserId].username }}:
-              </div>
-              <div class="grow inline">{{ c.text }}</div>
-            </div>
-          </div>
-        </div>
-        <div ref="$scrollToBottom"></div>
+        <ActivityLogPane />
       </div>
     </div>
   </div>

@@ -516,6 +516,22 @@ Ensure the default browser behavior of the `hidden` attribute.
   margin-bottom: 0px;
 }
 
+.mb-2 {
+  margin-bottom: 0.5rem;
+}
+
+.mb-1 {
+  margin-bottom: 0.25rem;
+}
+
+.mr-1 {
+  margin-right: 0.25rem;
+}
+
+.mr-2 {
+  margin-right: 0.5rem;
+}
+
 .box-border {
   box-sizing: border-box;
 }
@@ -641,8 +657,16 @@ Ensure the default browser behavior of the `hidden` attribute.
   overflow-wrap: break-word;
 }
 
+.rounded {
+  border-radius: 0.25rem;
+}
+
 .border {
   border-width: 1px;
+}
+
+.border-2 {
+  border-width: 2px;
 }
 
 .border-black {
@@ -716,20 +740,18 @@ Ensure the default browser behavior of the `hidden` attribute.
   transition-duration: 150ms;
 }
 
-@font-face {
-  font-family: RobotoRegular;
-
-  src: url("./fonts/Roboto-Regular.ttf");
-}
-
 body, #app {
-  font-family: RobotoRegular;
+  font-family: roboto, sans-serif;
   position: fixed;
   overflow: hidden;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
+  font-feature-settings: "ss04" on;
+  -webkit-text-size-adjust: none;
+  font-size: 16px;
+  line-height: 1.2em;
 }
 
 @font-face {
