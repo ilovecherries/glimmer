@@ -61,17 +61,28 @@ export const useWebsocketStore = defineStore({
     } as WebsocketStoreState;
   },
   actions: {
+    onBroadcastMessage(event: string) {
+      console.log(event)
+      this.whenReady(() => {
+        console.log("please?");
+        this.websocket!.send(event as string);
+      });
+    },
     start(token: string) {
       console.log("websocket start trigger!");
       setTimeout(() => {
         if (this.leader === LeaderStatus.unknown)
           this.leader = LeaderStatus.not;
-      }, 10000);
+      }, 500);
       elector.awaitLeadership().then(() => {
-        console.log("LEADERSHIP TAKEN!");
         this.leader = LeaderStatus.confirmed;
         if (this.websocket) return;
         this.websocket = getWebSocket(token, this.lastId);
+        console.log("LEADERSHIP TAKEN!");
+
+        channel.addEventListener("message", (e: string) => {
+          this.onBroadcastMessage(e);
+        });
 
         const shared = useSharedStore();
         const state = useStateStore();
@@ -116,11 +127,9 @@ export const useWebsocketStore = defineStore({
                   count: x.count,
                 };
               else {
-                const lastDate =
-                  shared.notifications[id].lastCommentDate;
+                const lastDate = shared.notifications[id].lastCommentDate;
                 if (new Date(lastDate) < new Date(x.maxCreateDate)) {
-                  shared.notifications[id].lastCommentDate =
-                    x.maxCreateDate;
+                  shared.notifications[id].lastCommentDate = x.maxCreateDate;
                 }
                 shared.notifications[id].count += x.count;
               }
@@ -223,22 +232,29 @@ export const useWebsocketStore = defineStore({
       });
     },
     sendRequest(data: any, callback: ListenerFunc) {
-      this.whenReady(() => {
-        const id = uniqueIdGen();
-        const req = {
-          id,
-          data,
-          type: "request",
-        } as WebsocketRequest;
-        const shared = useSharedStore();
-        const x = () => {
-          const data = shared.getRequestData(id);
-          if (data) callback(data);
-          else setTimeout(x, 30);
-        };
-        this.websocket!.send(JSON.stringify(req));
-        setTimeout(x, 30);
-      });
+      const id = uniqueIdGen();
+      const req = {
+        id,
+        data,
+        type: "request",
+      } as WebsocketRequest;
+      const shared = useSharedStore();
+      const x = () => {
+        const data = shared.getRequestData(id);
+        if (data) callback(data);
+        else setTimeout(x, 30);
+      };
+      console.log("owo message");
+      this.whenReady(
+        () => {
+          this.websocket!.send(JSON.stringify(req));
+          setTimeout(x, 30);
+        },
+        () => {
+          channel.postMessage(JSON.stringify(req));
+          setTimeout(x, 30);
+        }
+      );
     },
     stop() {
       this.websocket?.close();
@@ -247,32 +263,34 @@ export const useWebsocketStore = defineStore({
     setErrorHandler(func: ListenerFunc) {
       this.errorHandler = func;
     },
-    whenReady(func: () => void) {
+    whenReady(func: () => void, notLeader?: () => void) {
       if (
         this.leader === LeaderStatus.unknown ||
         this.leader === LeaderStatus.confirmed
       ) {
         const x = () => {
+          console.log("checking for ready?");
           if (this.ready) func();
+          else if (this.leader === LeaderStatus.not && notLeader) notLeader();
           else setTimeout(x, 20);
         };
         x();
+      } else if (notLeader) {
+        console.log("not leader...")
+        notLeader();
       }
     },
     setStatus(room: number, status = RoomStatus.active) {
+      return;
       const data: StatusData = {};
       data[room] = status;
 
-      this.whenReady(() => {
-        if (this.websocket) {
-          const req: WebsocketRequest = {
-            type: "setuserstatus",
-            data,
-            id: uniqueIdGen(),
-          };
-          this.websocket.send(JSON.stringify(req));
-        }
-      });
+      const req: WebsocketRequest = {
+        type: "setuserstatus",
+        data,
+        id: uniqueIdGen(),
+      };
+      channel.postMessage(JSON.stringify(req));
     },
   },
 });
