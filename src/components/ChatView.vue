@@ -4,6 +4,7 @@ import { avatarUrl } from "@/lib/qcs/types/User";
 import { storeToRefs } from "pinia";
 import { onUpdated, nextTick, ref, watch } from "vue";
 import { useSettingsStore } from "@/stores/settings";
+import { useStateStore } from "@/stores/state";
 import MarkupRender from "./MarkupRender.vue";
 import { API_DOMAIN } from "@/lib/qcs/qcs";
 import { useIdentityStore } from "@/stores/identity";
@@ -13,6 +14,7 @@ import { RequestSearchParameter } from "@/lib/qcs/types/RequestSearchParameter";
 import { useWebsocketStore } from "@/stores/websocket";
 import type { RequestData } from "@/lib/qcs/types/RequestData";
 
+const state = useStateStore();
 const shared = useSharedStore();
 const settings = useSettingsStore();
 const identity = useIdentityStore();
@@ -21,6 +23,7 @@ const websocket = useWebsocketStore();
 const { commentChunks } = storeToRefs(shared);
 const { avatarSize, nickname, ignoredUsers, commentPagination, markup } =
   storeToRefs(settings);
+const { openSidebar } = storeToRefs(shared)
 
 const props = defineProps({
   contentId: Number,
@@ -51,6 +54,7 @@ let imageSrc = ref<null | string>(null);
 let imageFileUrl = ref<null | string>(null);
 let imageFileUrlEl = ref<null | HTMLInputElement>(null);
 
+let scrollOnSidebarClose = false;
 let shouldScroll = false;
 let scrollOnVisibility = false;
 const SCROLL_RANGE = 50;
@@ -220,6 +224,12 @@ watch(editing, () => {
   }
 });
 
+watch(openSidebar, () => {
+  if (!openSidebar && scrollOnSidebarClose) {
+    scroll();
+  }
+});
+
 watch(
   () => props.contentId,
   () => {
@@ -228,6 +238,7 @@ watch(
       shared.notifications[props.contentId].count = 0;
     }
     shouldScroll = true;
+    scrollOnSidebarClose = window.innerWidth >= 768;
   }
 );
 

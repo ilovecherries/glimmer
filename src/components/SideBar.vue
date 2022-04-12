@@ -46,7 +46,7 @@ watchEffect(() => {
 </script>
 
 <template>
-  <div v-show="openSidebar" class="sidebar">
+  <div v-show="openSidebar" class="sidebar grow w-full">
     <div class="flex flex-col h-full">
       <div v-if="loggedIn">
         <img

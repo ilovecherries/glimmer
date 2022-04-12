@@ -21,9 +21,9 @@ const elector = createLeaderElection(channel);
 export type ListenerFunc = (a: WebsocketResult) => void;
 
 enum LeaderStatus {
-  unknown,
-  confirmed,
-  not,
+  unknown = 0,
+  confirmed = 1,
+  not = 2,
 }
 
 export type WebsocketStoreState = {
@@ -32,7 +32,7 @@ export type WebsocketStoreState = {
   errorHandler: undefined | ListenerFunc;
   requests: Map<string, ListenerFunc>;
   requestResults: Map<string, any>;
-  leader: LeaderStatus;
+  checkedLeader: boolean;
   ready: boolean;
 };
 
@@ -56,26 +56,28 @@ export const useWebsocketStore = defineStore({
       websocket: undefined,
       errorHandler: undefined,
       requests: new Map(),
-      leader: LeaderStatus.unknown,
+      checkedLeader: false,
       ready: false,
     } as WebsocketStoreState;
   },
   actions: {
     onBroadcastMessage(event: string) {
-      console.log(event)
+      console.log(event);
+      console.log(this.websocket);
+      console.log(this.ready);
       this.whenReady(() => {
         console.log("please?");
+        console.log(this.websocket);
         this.websocket!.send(event as string);
       });
     },
     start(token: string) {
       console.log("websocket start trigger!");
       setTimeout(() => {
-        if (this.leader === LeaderStatus.unknown)
-          this.leader = LeaderStatus.not;
+        this.checkedLeader = true;
       }, 500);
       elector.awaitLeadership().then(() => {
-        this.leader = LeaderStatus.confirmed;
+        this.checkedLeader = true;
         if (this.websocket) return;
         this.websocket = getWebSocket(token, this.lastId);
         console.log("LEADERSHIP TAKEN!");
@@ -264,24 +266,27 @@ export const useWebsocketStore = defineStore({
       this.errorHandler = func;
     },
     whenReady(func: () => void, notLeader?: () => void) {
-      if (
-        this.leader === LeaderStatus.unknown ||
-        this.leader === LeaderStatus.confirmed
-      ) {
-        const x = () => {
-          console.log("checking for ready?");
-          if (this.ready) func();
-          else if (this.leader === LeaderStatus.not && notLeader) notLeader();
-          else setTimeout(x, 20);
-        };
-        x();
-      } else if (notLeader) {
-        console.log("not leader...")
-        notLeader();
+      try {
+        console.log("what's going on???");
+        console.log(elector.isLeader);
+        if (!this.checkedLeader || elector.isLeader) {
+          const x = () => {
+            console.log("checking for ready?");
+            if (this.ready) func();
+            else if (!elector.isLeader && this.checkedLeader && notLeader)
+              notLeader();
+            else setTimeout(x, 20);
+          };
+          setTimeout(x, 20);
+        } else if (notLeader) {
+          console.log("not leader...");
+          notLeader();
+        }
+      } catch (err) {
+        console.error(err);
       }
     },
     setStatus(room: number, status = RoomStatus.active) {
-      return;
       const data: StatusData = {};
       data[room] = status;
 
@@ -290,7 +295,14 @@ export const useWebsocketStore = defineStore({
         data,
         id: uniqueIdGen(),
       };
-      channel.postMessage(JSON.stringify(req));
+      this.whenReady(
+        () => {
+          this.websocket!.send(JSON.stringify(req));
+        },
+        () => {
+          channel.postMessage(JSON.stringify(req));
+        }
+      );
     },
   },
 });

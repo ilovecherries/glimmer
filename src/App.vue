@@ -10,7 +10,7 @@ import { storeToRefs } from "pinia";
 const identity = useIdentityStore();
 const state = useStateStore();
 
-const { headerText } = storeToRefs(state);
+const { headerText, openSidebar } = storeToRefs(state);
 
 const { loggedIn, token } = storeToRefs(identity);
 
@@ -52,7 +52,9 @@ watchEffect(() => {
       </button>
     </header>
     <div class="flex w-full grow">
-      <RouterView />
+      <div :class="`h-full grow ${openSidebar ? 'hidden' : 'block'} md:block`">
+        <RouterView />
+      </div>
       <SideBar />
     </div>
   </div>

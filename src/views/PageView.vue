@@ -147,7 +147,7 @@ watch(commentChunks.value, () => {
 </script>
 
 <template>
-  <main>
+  <main class="h-full">
     <div class="flex flex-col h-full">
       <div class="flex flex-col grow h-full">
         <div class="h-10 w-full bg-slate-200">
