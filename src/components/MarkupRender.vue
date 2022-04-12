@@ -41,9 +41,9 @@ video {
   transition: height .25s ease;
 }
 
-.markup-root img:focus,
-video:focus {
-  height: 70vh;
+.markup-root img:hover,
+video:hover {
+  cursor: pointer;
 }
 
 /* .markup-root:after {

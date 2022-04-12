@@ -1,5 +1,6 @@
 import { Markup } from "markup2/parse";
 import { HighlightJS } from "highlight.js";
+import { useStateStore } from "../../stores/state";
 
 Markup.INJECT = (Markup) => {
   "use strict";
@@ -56,6 +57,10 @@ Markup.INJECT = (Markup) => {
       if (alt != null) e.alt = alt;
       if (width) e.width = width;
       if (height) e.height = height;
+      e.addEventListener("click", () => {
+        const state = useStateStore();
+        state.imageView = e.src;
+      });
       return e;
     }.bind(𐀶`<img data-loading data-shrink tabindex=-1>`),
 
