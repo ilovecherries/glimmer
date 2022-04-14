@@ -62,29 +62,27 @@ watchEffect(() => {
       </div>
       <div
         :class="`absolute top-0 left-0 flex flex-col image-view image-view-${
-          imageView ? 'visible' : 'hidden'
+          imageView?.show ? 'visible' : 'hidden'
         }`"
-        @click="imageView = undefined"
+        @click="imageView!.show = false"
       >
-        <div class="m-auto">
-          <div class="max-h-fit max-w-fit p-2">
-            <img
-              :src="imageView || ''"
-              alt=""
-              :class="`image-view image-view-${
-                imageView ? 'visible' : 'hidden'
-              }`"
-            />
-          </div>
-          <a
-            v-show="imageView"
-            :href="imageView"
-            target="_blank"
-            class="p-1 bg-slate-100 m-x max-w-fit"
-          >
-            {{ imageView }}
-          </a>
+        <div class="m-auto max-h-fit max-w-fit p-2">
+          <img
+            :src="imageView?.url || ''"
+            alt=""
+            :class="`image-view image-view-${
+              imageView?.show ? 'visible' : 'hidden'
+            }`"
+          />
         </div>
+        <a
+          v-show="imageView?.show"
+          :href="imageView?.url || ''"
+          target="_blank"
+          class="p-1 bg-slate-100 max-w-fit bottom-0 left-0 absolute"
+        >
+          {{ imageView?.url || "" }}
+        </a>
       </div>
     </div>
   </div>
@@ -111,7 +109,6 @@ main,
 img.image-view {
   max-height: 80vh;
   max-width: 80vw;
-  transition: transform 0.2s, opacity 0.2s;
 }
 
 div.image-view-hidden {
@@ -130,11 +127,14 @@ div.image-view-visible {
 }
 
 img.image-view-hidden {
+  max-height: 0px;
+  transition: transform 0.2s, opacity 0.2s, max-height 0.2s steps(1, end);
   opacity: 0;
-  transform: scale(0);
+  transform: scale(0.8);
 }
 
 img.image-view-visible {
+  transition: transform 0.2s, opacity 0.2s;
   opacity: 1;
   transform: scale(1);
 }

@@ -480,11 +480,16 @@ Ensure the default browser behavior of the `hidden` attribute.
   position: relative;
 }
 
-.inset-2\/4 {
-  top: 50%;
-  right: 50%;
-  bottom: 50%;
-  left: 50%;
+.top-0 {
+  top: 0px;
+}
+
+.left-0 {
+  left: 0px;
+}
+
+.bottom-0 {
+  bottom: 0px;
 }
 
 .right-2 {
@@ -495,44 +500,16 @@ Ensure the default browser behavior of the `hidden` attribute.
   top: -1em;
 }
 
-.top-0 {
-  top: 0px;
-}
-
 .right-4 {
   right: 1rem;
 }
 
-.left-0 {
-  left: 0px;
-}
-
-.right-0 {
-  right: 0px;
-}
-
-.top-1 {
-  top: 0.25rem;
-}
-
-.-top-1 {
-  top: -0.25rem;
-}
-
-.-top-4 {
-  top: -1rem;
-}
-
-.-right-4 {
-  right: -1rem;
+.m-auto {
+  margin: auto;
 }
 
 .m-1 {
   margin: 0.25rem;
-}
-
-.m-auto {
-  margin: auto;
 }
 
 .mx-1 {
@@ -615,24 +592,10 @@ Ensure the default browser behavior of the `hidden` attribute.
   height: 2.5rem;
 }
 
-.h-1 {
-  height: 0.25rem;
-}
-
-.max-h-\[80vh\] {
-  max-height: 80vh;
-}
-
 .max-h-fit {
   max-height: -webkit-fit-content;
   max-height: -moz-fit-content;
   max-height: fit-content;
-}
-
-.max-h-max {
-  max-height: -webkit-max-content;
-  max-height: -moz-max-content;
-  max-height: max-content;
 }
 
 .w-8 {
@@ -657,14 +620,6 @@ Ensure the default browser behavior of the `hidden` attribute.
 
 .w-10 {
   width: 2.5rem;
-}
-
-.max-w-\[\] {
-  max-width: ;
-}
-
-.max-w-\[80vw\] {
-  max-width: 80vw;
 }
 
 .max-w-fit {
@@ -740,6 +695,11 @@ Ensure the default browser behavior of the `hidden` attribute.
   background-color: rgb(203 213 225 / var(--tw-bg-opacity));
 }
 
+.bg-slate-100 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(241 245 249 / var(--tw-bg-opacity));
+}
+
 .bg-white {
   --tw-bg-opacity: 1;
   background-color: rgb(255 255 255 / var(--tw-bg-opacity));
@@ -755,29 +715,12 @@ Ensure the default browser behavior of the `hidden` attribute.
   background-color: rgb(226 232 240 / var(--tw-bg-opacity));
 }
 
-.bg-slate-100 {
-  --tw-bg-opacity: 1;
-  background-color: rgb(241 245 249 / var(--tw-bg-opacity));
-}
-
-.bg-\[rgb\(0\2c 0\2c 0\2c 0\.1\)\] {
-  background-color: rgb(0,0,0,0.1);
-}
-
-.bg-\[rgba\(0\2c 0\2c 0\2c 0\.1\)\] {
-  background-color: rgba(0,0,0,0.1);
-}
-
-.bg-\[rgba\(0\2c 0\2c 0\2c 0\.4\)\] {
-  background-color: rgba(0,0,0,0.4);
+.p-2 {
+  padding: 0.5rem;
 }
 
 .p-1 {
   padding: 0.25rem;
-}
-
-.p-2 {
-  padding: 0.5rem;
 }
 
 .px-2 {
@@ -812,11 +755,6 @@ Ensure the default browser behavior of the `hidden` attribute.
 
 .italic {
   font-style: italic;
-}
-
-.text-white {
-  --tw-text-opacity: 1;
-  color: rgb(255 255 255 / var(--tw-text-opacity));
 }
 
 .transition {

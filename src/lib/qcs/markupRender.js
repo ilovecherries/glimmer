@@ -59,7 +59,10 @@ Markup.INJECT = (Markup) => {
       if (height) e.height = height;
       e.addEventListener("click", () => {
         const state = useStateStore();
-        state.imageView = e.src;
+        state.imageView = {
+          url: e.src,
+          show: true,
+        };
       });
       return e;
     }.bind(𐀶`<img data-loading data-shrink tabindex=-1>`),
