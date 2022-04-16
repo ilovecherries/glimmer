@@ -68,7 +68,12 @@ document.addEventListener("visibilitychange", () => {
   }
 });
 
+let sendingMessage = false;
+
 async function sendMessage() {
+  if (textboxContent.value.trim() === "" || sendingMessage) return;
+  sendingMessage = true;
+
   let msg: Partial<Comment> = {
     text: textboxContent.value.trim(),
     contentId: props.contentId!,
@@ -93,6 +98,8 @@ async function sendMessage() {
   } catch (e) {
     console.error(e);
   }
+
+  sendingMessage = false;
 }
 
 function stopEdit() {
