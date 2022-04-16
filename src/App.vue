@@ -123,12 +123,14 @@ div.image-view-visible {
   transition: background-color 0.2s;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.4);
+  background-color: rgba(0, 0, 0, 0.8);
 }
 
 img.image-view-hidden {
   max-height: 0px;
-  transition: transform 0.2s, opacity 0.2s, max-height 0.2s steps(1, end);
+  min-height: 0px;
+  transition: transform 0.2s, opacity 0.2s, max-height 0.2s steps(1, end),
+    min-height 0.2s steps(1, end);
   opacity: 0;
   transform: scale(0.8);
 }
