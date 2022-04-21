@@ -21,7 +21,7 @@ const websocket = useWebsocketStore();
 
 const { headerText } = storeToRefs(state);
 
-const { avatarSize, titleNotifications } = storeToRefs(settings);
+const { avatarSize, titleNotifications, ignoredUsers } = storeToRefs(settings);
 const { commentChunks, contents, users, userlists } = storeToRefs(shared);
 const { loggedIn } = storeToRefs(identity);
 
@@ -63,7 +63,6 @@ watchEffect(async () => {
     });
     if (contents.value[id] && contents.value[id].state === ContentState.full) {
       const page = contents.value[id].data;
-      console.log(contents.value);
       headerText.value = page.name;
       return;
     }
@@ -91,7 +90,7 @@ watchEffect(async () => {
           const clearNotif = () => {
             if (shared.messageInitialLoad) {
               if (props.id && shared.notifications[parseInt(props.id)]) {
-              shared.notifications[parseInt(props.id)].count = 0;
+                shared.notifications[parseInt(props.id)].count = 0;
               }
             } else setTimeout(clearNotif, 20);
           };
@@ -144,6 +143,14 @@ watch(commentChunks.value, () => {
     }
   }
 });
+
+function toggleIgnoreUser(uid: number) {
+  if (ignoredUsers.value.findIndex(x => x === uid) === -1) {
+    ignoredUsers.value.push(uid);
+  } else {
+    ignoredUsers.value = ignoredUsers.value.filter(x => x !== uid);
+  }
+}
 </script>
 
 <template>
@@ -155,11 +162,28 @@ watch(commentChunks.value, () => {
             <div
               v-for="u in Object.keys(userlists[parseInt(props.id!)])"
               :key="u"
+              class="relative"
             >
               <img
-                class="w-10 h-10"
+                :class="`w-10 h-10 peer ${
+                  ignoredUsers.findIndex((x) => x === parseInt(u)) === -1
+                    ? 'sepia-0'
+                    : 'sepia'
+                }`"
                 :src="avatarUrl(users[parseInt(u)].avatar, avatarSize)"
               />
+              <div
+                class="hidden peer-hover:block hover:block absolute b-10 bg-slate-100 z-50 min-w-max"
+              >
+                <div>{{ users[parseInt(u)].username }}</div>
+                <div>{{ users[parseInt(u)].createDate }}</div>
+                <div
+                  @click="toggleIgnoreUser(parseInt(u))"
+                  class="hover:cursor-pointer"
+                >
+                  Ignore User
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -175,7 +199,6 @@ watch(commentChunks.value, () => {
 </template>
 
 <style>
-
 .chat-box {
   box-shadow: inset 0px 0px 0px 1px rgb(0, 20, 80);
 }

@@ -91,9 +91,7 @@ watchEffect(() => {
         </router-link>
       </div>
       <div class="h-4 bg-slate-600"></div>
-      <div class="grow overflow-y-scroll">
-        <ActivityLogPane />
-      </div>
+      <ActivityLogPane />
     </div>
   </div>
 </template>

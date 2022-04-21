@@ -20,12 +20,6 @@ const elector = createLeaderElection(channel);
 
 export type ListenerFunc = (a: WebsocketResult) => void;
 
-enum LeaderStatus {
-  unknown = 0,
-  confirmed = 1,
-  not = 2,
-}
-
 export type WebsocketStoreState = {
   lastId: undefined | number;
   websocket: undefined | WebSocket;
@@ -62,17 +56,13 @@ export const useWebsocketStore = defineStore({
   },
   actions: {
     onBroadcastMessage(event: string) {
-      console.log(event);
-      console.log(this.websocket);
-      console.log(this.ready);
       this.whenReady(() => {
-        console.log("please?");
-        console.log(this.websocket);
+        console.log("📨 Message received through channel, sending:", event);
         this.websocket!.send(event as string);
       });
     },
     start(token: string) {
-      console.log("websocket start trigger!");
+      console.log("💤 Checking WebSocket status");
       setTimeout(() => {
         this.checkedLeader = true;
       }, 500);
@@ -80,14 +70,13 @@ export const useWebsocketStore = defineStore({
         this.checkedLeader = true;
         if (this.websocket) return;
         this.websocket = getWebSocket(token, this.lastId);
-        console.log("LEADERSHIP TAKEN!");
+        console.log("👑 WebSocket Leadership Taken");
 
         channel.addEventListener("message", (e: string) => {
           this.onBroadcastMessage(e);
         });
 
         const shared = useSharedStore();
-        const state = useStateStore();
 
         if (!shared.messageInitialLoad) {
           const search = new RequestParameter(
@@ -108,7 +97,9 @@ export const useWebsocketStore = defineStore({
             ]
           );
           this.sendRequest(search, (res) => {
-            console.log("MESSAGE AGGREGATE", res);
+            console.log(
+              "➡️ Getting initial Message Aggregate to populate activity"
+            );
             const data = res.data.objects;
             data.content?.map((x) => {
               if (shared.contents[x.id])
@@ -140,6 +131,8 @@ export const useWebsocketStore = defineStore({
           });
         }
 
+        this.setStatus(0);
+
         this.websocket.onclose = () => {
           this.start(token);
         };
@@ -148,7 +141,7 @@ export const useWebsocketStore = defineStore({
           try {
             const res = JSON.parse(event.data) as WebsocketResult;
 
-            console.log(res);
+            console.log("📦️ Received Message", res);
 
             switch (res.type) {
               case WebsocketResultType.Live: {
@@ -208,8 +201,6 @@ export const useWebsocketStore = defineStore({
                     shared.userlists[parseInt(x)] = y;
                   });
                 }
-                console.log("uwu");
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 break;
               }
               case WebsocketResultType.BadToken:
@@ -246,13 +237,14 @@ export const useWebsocketStore = defineStore({
         if (data) callback(data);
         else setTimeout(x, 30);
       };
-      console.log("owo message");
       this.whenReady(
         () => {
+          console.log(`🥺 Sending request ${req.id}`, req);
           this.websocket!.send(JSON.stringify(req));
           setTimeout(x, 30);
         },
         () => {
+          console.log("📡 Sending request through channel to Leader", req);
           channel.postMessage(JSON.stringify(req));
           setTimeout(x, 30);
         }
@@ -267,11 +259,8 @@ export const useWebsocketStore = defineStore({
     },
     whenReady(func: () => void, notLeader?: () => void) {
       try {
-        console.log("what's going on???");
-        console.log(elector.isLeader);
         if (!this.checkedLeader || elector.isLeader) {
           const x = () => {
-            console.log("checking for ready?");
             if (this.ready) func();
             else if (!elector.isLeader && this.checkedLeader && notLeader)
               notLeader();
@@ -279,7 +268,6 @@ export const useWebsocketStore = defineStore({
           };
           setTimeout(x, 20);
         } else if (notLeader) {
-          console.log("not leader...");
           notLeader();
         }
       } catch (err) {
@@ -297,9 +285,11 @@ export const useWebsocketStore = defineStore({
       };
       this.whenReady(
         () => {
+          console.log(`️👣 Status change: room ${room} = ${status}`, req);
           this.websocket!.send(JSON.stringify(req));
         },
         () => {
+          console.log("📡 Sending status through channel to Leader", req);
           channel.postMessage(JSON.stringify(req));
         }
       );

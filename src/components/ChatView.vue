@@ -13,6 +13,7 @@ import { RequestParameter } from "@/lib/qcs/types/RequestParameter";
 import { RequestSearchParameter } from "@/lib/qcs/types/RequestSearchParameter";
 import { useWebsocketStore } from "@/stores/websocket";
 import type { RequestData } from "@/lib/qcs/types/RequestData";
+import Scroller from "./Scroller.vue";
 
 const state = useStateStore();
 const shared = useSharedStore();
@@ -23,31 +24,19 @@ const websocket = useWebsocketStore();
 const { commentChunks } = storeToRefs(shared);
 const { avatarSize, nickname, ignoredUsers, commentPagination, markup } =
   storeToRefs(settings);
-const { openSidebar } = storeToRefs(shared)
+const { openSidebar } = storeToRefs(state);
 
 const props = defineProps({
   contentId: Number,
   showChatBox: Boolean,
 });
 
-let $scrollToBottom = ref<HTMLDivElement | null>(null);
-
-function scroll() {
-  nextTick(() => {
-    if ($scrollToBottom.value) {
-      $scrollToBottom.value.scrollIntoView({
-        block: "end",
-      });
-    }
-  });
-}
 
 let textboxContent = ref("");
 let editing = ref(0);
 let editContent = ref("");
 let $editBox = ref();
 let $chatBox = ref<null | HTMLTextAreaElement>(null);
-let $messages = ref<null | Array<HTMLDivElement>>(null);
 
 let imageData = ref<null | File>(null);
 let imageSrc = ref<null | string>(null);
@@ -59,14 +48,14 @@ let shouldScroll = false;
 let scrollOnVisibility = false;
 const SCROLL_RANGE = 50;
 
-document.addEventListener("visibilitychange", () => {
-  if (document.hidden && shouldScroll) {
-    scrollOnVisibility = true;
-  } else if (!document.hidden && scrollOnVisibility) {
-    scroll();
-    scrollOnVisibility = false;
-  }
-});
+// document.addEventListener("visibilitychange", () => {
+//   if (document.hidden && shouldScroll) {
+//     scrollOnVisibility = true;
+//   } else if (!document.hidden && scrollOnVisibility) {
+//     scroll();
+//     scrollOnVisibility = false;
+//   }
+// });
 
 let sendingMessage = false;
 
@@ -169,10 +158,6 @@ function upArrowEdit() {
 async function uploadImage() {
   try {
     const formData = new FormData();
-    for (let value of formData.values()) {
-      console.log(value);
-    }
-    console.log(imageData.value);
     formData.append("file", imageData.value as Blob);
     console.log(formData);
     const res = await fetch(`https://${API_DOMAIN}/api/File`, {
@@ -225,29 +210,10 @@ watch(editing, () => {
     nextTick(() => {
       if ($editBox.value) {
         $editBox.value.focus();
-        $editBox.value.scrollIntoView();
       }
     });
   }
 });
-
-watch(openSidebar, () => {
-  if (!openSidebar && scrollOnSidebarClose) {
-    scroll();
-  }
-});
-
-watch(
-  () => props.contentId,
-  () => {
-    editing.value = 0;
-    if (props.contentId && shared.notifications[props.contentId]) {
-      shared.notifications[props.contentId].count = 0;
-    }
-    shouldScroll = true;
-    scrollOnSidebarClose = window.innerWidth >= 768;
-  }
-);
 
 function detectImagePaste(event: ClipboardEvent) {
   if (event.clipboardData) {
@@ -275,49 +241,20 @@ watch(imageData, () => {
   }
 });
 
-const resizeObserver = new ResizeObserver((entries) => {
-  for (const entry of entries) {
-    if (entry.contentBoxSize) {
-      if (shouldScroll) {
-        nextTick(() => {
-          if ($scrollToBottom.value) {
-            $scrollToBottom.value.scrollIntoView({
-              behavior: "smooth",
-              block: "end",
-            });
-          }
-        });
-        if (props.contentId && shared.notifications[props.contentId]) {
-          shared.notifications[props.contentId].count = 0;
-        }
-      }
-    }
+watch(editContent, () => {
+  if ($editBox.value) {
+    // $editBox.value.style.height = $editBox.value.scrollHeight - 4 + "px";
+    let area = $editBox.value;
+    area.style.overflow = 'hidden';
+    area.style.height = area.scrollHeight + 'px';
   }
 });
-
-let $chatContainer = ref<HTMLDivElement | null>(null);
-watch($chatContainer, () => {
-  if ($chatContainer.value) {
-    resizeObserver.observe($chatContainer.value);
-  }
-});
-
-function updateScroll() {
-  if ($chatContainer.value) {
-    const scrolled =
-      $chatContainer.value.scrollHeight - $chatContainer.value.scrollTop;
-    const height = $chatContainer.value.clientHeight;
-    shouldScroll = scrolled <= height + SCROLL_RANGE;
-  }
-}
 </script>
 
 <template>
   <div class="flex flex-col grow h-full">
-    <div
-      class="overflow-y-scroll grow h-full"
-      ref="$chatContainer"
-      @scroll="updateScroll"
+    <Scroller
+      :watch-value="commentChunks[props.contentId!]?.at(-1)?.comments?.at(-1) || undefined"
     >
       <button @click="loadOlderMessages">LOAD OLDER MESSAGES</button>
       <div
@@ -325,11 +262,6 @@ function updateScroll() {
         :key="c.firstId"
         v-show="ignoredUsers.findIndex((x) => x === c.uid) == -1"
         class="flex mx-1 my-2"
-        :ref="
-          (el) => {
-            if (el) resizeObserver.observe(el as Element);
-          }
-        "
       >
         <img
           :src="avatarUrl(c.avatar, avatarSize)"
@@ -396,8 +328,7 @@ function updateScroll() {
           </div>
         </div>
       </div>
-      <div ref="$scrollToBottom"></div>
-    </div>
+    </Scroller>
     <div class="h-12 w-full relative">
       <div
         v-if="imageSrc"
@@ -449,5 +380,4 @@ function updateScroll() {
 .img-upload-view {
   image-rendering: pixelated;
 }
-
 </style>
