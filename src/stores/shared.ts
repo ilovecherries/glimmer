@@ -9,6 +9,7 @@ export type UserStatus = {
   username: string;
   status: string;
 };
+
 export interface Chunk {
   firstId: number;
   lastId: number;
@@ -82,6 +83,7 @@ export type SharedStoreState = {
   commentChunks: CommentChunkContainer;
   users: UserContainer;
   userlists: UserlistContainer;
+  // userlists: Map<number, WebsocketResult.StatusData>;
   myStatuses: WebsocketResult.StatusData;
   wsResultStore: WebsocketResultContainer;
   messageInitialLoad: boolean;
@@ -154,27 +156,30 @@ export const useSharedStore = defineStore({
         const current = this.commentChunks[roomId].at(-1);
         if (current) {
           const currentComment = current.comments.at(-1);
-          const currentDate = new Date(currentComment!.createDate);
-          const commentDate = new Date(comment.createDate);
-          const diff = Math.floor(
-            (commentDate.getTime() - currentDate.getTime()) / 60000
-          );
-          if (
-            current.uid !== user.id ||
-            current.avatar !== avatar ||
-            current.username !== username ||
-            current.nickname !== nickname ||
-            diff >= 5
-          ) {
-            pushChunk();
+          if (currentComment) {
+            const currentDate = new Date(currentComment.createDate);
+            const commentDate = new Date(comment.createDate);
+            const diff = Math.floor(
+              (commentDate.getTime() - currentDate.getTime()) / 60000
+            );
+            if (
+              current.uid !== user.id ||
+              current.avatar !== avatar ||
+              current.username !== username ||
+              current.nickname !== nickname ||
+              diff >= 5
+            ) {
+              pushChunk();
+            }
           }
         }
       }
 
-      this.commentChunks[roomId][
-        this.commentChunks[roomId].length - 1
-      ].comments.push(comment);
-      this.commentChunks[roomId].at(-1)!.lastId = comment.id;
+      const lastChunk = this.commentChunks[roomId]?.at(-1);
+      if (lastChunk) {
+        lastChunk.comments.push(comment);
+        lastChunk.lastId = comment.id;
+      }
     },
     sortComments() {
       this.comments = this.comments.reduce(function (
@@ -214,12 +219,13 @@ export const useSharedStore = defineStore({
       const n = this.notifications[comment.contentId];
       if (n) {
         n.count += 1;
-        n.lastCommentDate = comment.createDate;
+        if (comment.createDate > n.lastCommentDate)
+          n.lastCommentDate = comment.createDate;
       } else {
         this.notifications[comment.contentId] = {
           count: 1,
           lastCommentDate: comment.createDate,
-          contentId: comment.contentId
+          contentId: comment.contentId,
         };
       }
     },
@@ -232,8 +238,10 @@ export const useSharedStore = defineStore({
             if (chunks[i].comments.length === 0) {
               chunks.splice(i, 1);
             } else {
-              chunks[i].firstId = chunks[i].comments.at(0)!.id;
-              chunks[i].lastId = chunks[i].comments.at(-1)!.id;
+              const first = chunks[i]?.comments.at(0);
+              if (first) chunks[i].firstId = first.id;
+              const last = chunks[i]?.comments.at(-1);
+              if (last) chunks[i].lastId = last.id;
             }
           } else {
             break;
@@ -268,13 +276,34 @@ export const useSharedStore = defineStore({
       const { id, contentId } = comment;
       const commentIndex = this.comments.findIndex((x) => x.id === id);
       if (commentIndex > -1) {
+        // detecting a rethread
+        const oldContentId = this.comments[commentIndex].contentId;
         this.comments[commentIndex] = comment;
-        const room = this.commentChunks[contentId];
-        this.editInChunks(room, comment);
-        this.editInChunks(this.activityChunks, comment);
+        if (oldContentId !== comment.contentId) {
+          this.sortComments();
+          this.rebuildCommentChunks(contentId);
+          this.rebuildCommentChunks(oldContentId);
+          this.rebuildActivityChunks();
+        } else {
+          const room = this.commentChunks[contentId];
+          this.editInChunks(room, comment);
+          this.editInChunks(this.activityChunks, comment);
+        }
+      } else {
+        const oldestInRoom = this.comments.find(
+          (x) => x.contentId === contentId
+        );
+        if (oldestInRoom && oldestInRoom.id < id) {
+          this.comments.push(comment);
+          this.sortComments();
+          this.rebuildCommentChunks(contentId);
+          this.rebuildActivityChunks();
+        }
       }
     },
-    getRequestData(requestId: string): undefined | WebsocketResult.WebsocketResult {
+    getRequestData(
+      requestId: string
+    ): undefined | WebsocketResult.WebsocketResult {
       if (this.wsResultStore[requestId]) {
         const data = Object.assign({}, this.wsResultStore[requestId]);
         delete this.wsResultStore[requestId];
@@ -283,8 +312,16 @@ export const useSharedStore = defineStore({
       return undefined;
     },
     addUser(user: User) {
-      if (this.users[user.id]) Object.assign(this.users[user.id], user);
-      else this.users[user.id] = user;
+      this.users[user.id] = user;
+    },
+    addContent(content: Content, state: ContentState) {
+      if (this.contents[content.id]) {
+        Object.assign(this.contents[content.id], content);
+      } else
+        this.contents[content.id] = {
+          data: content,
+          state,
+        };
     },
   },
   share: {

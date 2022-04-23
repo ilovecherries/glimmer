@@ -3,19 +3,26 @@ import { RouterView } from "vue-router";
 import SideBar from "@/components/SideBar.vue";
 import { useIdentityStore } from "./stores/identity";
 import { useWebsocketStore } from "./stores/websocket";
-import { watch, watchEffect } from "vue";
+import { ref, watch, watchEffect } from "vue";
 import { useStateStore } from "./stores/state";
 import { storeToRefs } from "pinia";
+import { ContentState, useSharedStore } from "./stores/shared";
+import { GetSearchBackDate } from "./lib/qcs/qcs";
+import { RequestParameter } from "./lib/qcs/types/RequestParameter";
+import { RequestSearchParameter } from "./lib/qcs/types/RequestSearchParameter";
+import { sendRequest } from "./lib/helpers";
 
 const identity = useIdentityStore();
 const state = useStateStore();
+const shared = useSharedStore();
 
 const { headerText, openSidebar, imageView } = storeToRefs(state);
 
 const { loggedIn, token } = storeToRefs(identity);
+const { messageInitialLoad } = storeToRefs(shared);
 
 const ws = useWebsocketStore();
-const { websocket } = storeToRefs(ws);
+const { checkedLeader, websocket, ready } = storeToRefs(ws);
 
 function manageWS() {
   if (loggedIn.value && !websocket.value) ws.start(token.value);
@@ -29,25 +36,107 @@ watch(loggedIn, async () => {
 watchEffect(() => {
   manageWS();
 });
+
+watch(
+  [messageInitialLoad, checkedLeader],
+  () => {
+    if (checkedLeader.value && shared && !messageInitialLoad.value) {
+      const search = new RequestParameter(
+        {
+          yesterday: GetSearchBackDate(24),
+        },
+        [
+          new RequestSearchParameter(
+            "message_aggregate",
+            "contentId,count,maxId,minId,createUserId,maxCreateDate",
+            "createDate > @yesterday"
+          ),
+          new RequestSearchParameter(
+            "content",
+            "id,values,keywords,votes,text,commentCount,name,createUserId",
+            "id in @message_aggregate.contentId"
+          ),
+          new RequestSearchParameter(
+            "user",
+            "*",
+            "id in @content.createUserId"
+          ),
+        ]
+      );
+      console.log("🏄 Getting initial Message Aggregate to populate activity");
+      sendRequest(search, (data) => {
+        const shared = useSharedStore();
+        data.content?.map((x) => shared.addContent(x, ContentState.partial));
+        data.user?.map(shared.addUser);
+        data.message_aggregate?.map((x) => {
+          const id = x.contentId;
+          if (!shared.notifications[id])
+            shared.notifications[id] = {
+              contentId: id,
+              lastCommentDate: x.maxCreateDate,
+              count: x.count,
+            };
+          else {
+            const lastDate = shared.notifications[id].lastCommentDate;
+            if (new Date(lastDate) < new Date(x.maxCreateDate)) {
+              shared.notifications[id].lastCommentDate = x.maxCreateDate;
+            }
+            shared.notifications[id].count += x.count;
+          }
+        });
+        shared.messageInitialLoad = true;
+      });
+    }
+  },
+  { immediate: true }
+);
+
+let isLeader = ref(false);
+watch(
+  [loggedIn, websocket],
+  () => {
+    if (loggedIn.value) {
+      ws.whenReady(
+        () => (isLeader.value = true),
+        () => (isLeader.value = false)
+      );
+    }
+  },
+  { immediate: true }
+);
 </script>
 
 <template>
   <div class="h-full relative">
     <div class="h-full flex flex-col dark dark:bg-slate-900">
-      <header class="flex">
-        <div>
-          <img
+      <header class="flex h-7">
+        <div class="grow">
+          <!-- <img
             src="./assets/glimmer_scaled.png"
             alt="Starlight Glimmer's Cutiemark"
-            class="px-2 w-8 h-auto"
-          />
+            class="px-2 py-1 w-6 h-auto inline"
+          /> -->
+          <h1 class="text-xl py-1 text-white inline">{{ headerText }}</h1>
         </div>
-        <div>
-          <h1 class="text-xl py-1 white">{{ headerText }}</h1>
+        <div class="h-full flex">
+          <div
+            v-if="loggedIn"
+            :class="`h-2 w-2 m-3 rounded-full ${
+              isLeader ? 'bg-yellow-300' : 'bg-blue-200'
+            }`"
+            title="Leader Status"
+          ></div>
+          <div
+            v-if="loggedIn && isLeader"
+            :class="`h-2 w-2 m-3 rounded-full ${
+              websocket ? 'bg-green-400' : 'bg-red-600'
+            }`"
+            title="WebSocket Status"
+          ></div>
         </div>
         <button
           @click="state.openSidebar = !state.openSidebar"
-          class="bg-slate-300"
+          class="bg-slate-300 shrink-0"
         >
           Toggle Sidebar
         </button>
@@ -90,6 +179,7 @@ watchEffect(() => {
 
 <style>
 @import "./assets/output.css";
+@import "./code.css";
 header {
   background: gray;
 }
@@ -101,6 +191,13 @@ header {
 main,
 .grow {
   flex: 1 1 0;
+  /* min-height: 0; /* i don't understand this either */
+  /* overflow: auto; */
+  min-width: 0;
+}
+
+.grow-0 {
+  flex: 0 1 0;
   /* min-height: 0; /* i don't understand this either */
   /* overflow: auto; */
   min-width: 0;

@@ -13,7 +13,7 @@ import {
 import { BroadcastChannel, createLeaderElection } from "broadcast-channel";
 import { defineStore } from "pinia";
 import { ContentState, useSharedStore } from "./shared";
-import { uniqueIdGen, useStateStore } from "./state";
+import { uniqueIdGen } from "./state";
 
 const channel = new BroadcastChannel("glimmer-ws");
 const elector = createLeaderElection(channel);
@@ -25,7 +25,6 @@ export type WebsocketStoreState = {
   websocket: undefined | WebSocket;
   errorHandler: undefined | ListenerFunc;
   requests: Map<string, ListenerFunc>;
-  requestResults: Map<string, any>;
   checkedLeader: boolean;
   ready: boolean;
 };
@@ -55,10 +54,10 @@ export const useWebsocketStore = defineStore({
     } as WebsocketStoreState;
   },
   actions: {
-    onBroadcastMessage(event: string) {
+    onBroadcastMessage(event: unknown) {
       this.whenReady(() => {
         console.log("📨 Message received through channel, sending:", event);
-        this.websocket!.send(event as string);
+        this.websocket?.send(JSON.stringify(event));
       });
     },
     start(token: string) {
@@ -72,64 +71,11 @@ export const useWebsocketStore = defineStore({
         this.websocket = getWebSocket(token, this.lastId);
         console.log("👑 WebSocket Leadership Taken");
 
-        channel.addEventListener("message", (e: string) => {
-          this.onBroadcastMessage(e);
-        });
-
         const shared = useSharedStore();
 
-        if (!shared.messageInitialLoad) {
-          const search = new RequestParameter(
-            {
-              yesterday: GetSearchBackDate(24),
-            },
-            [
-              new RequestSearchParameter(
-                "message_aggregate",
-                "contentId,count,maxId,minId,createUserId,maxCreateDate",
-                "createDate > @yesterday"
-              ),
-              new RequestSearchParameter(
-                "content",
-                "~values,keywords,votes,text,commentCount",
-                "id in @message_aggregate.contentId"
-              ),
-            ]
-          );
-          this.sendRequest(search, (res) => {
-            console.log(
-              "➡️ Getting initial Message Aggregate to populate activity"
-            );
-            const data = res.data.objects;
-            data.content?.map((x) => {
-              if (shared.contents[x.id])
-                Object.assign(shared.contents[x.id], x);
-              else {
-                shared.contents[x.id] = {
-                  data: x,
-                  state: ContentState.partial,
-                };
-              }
-            });
-            data.message_aggregate?.map((x) => {
-              const id = x.contentId;
-              if (!shared.notifications[id])
-                shared.notifications[id] = {
-                  contentId: id,
-                  lastCommentDate: x.maxCreateDate,
-                  count: x.count,
-                };
-              else {
-                const lastDate = shared.notifications[id].lastCommentDate;
-                if (new Date(lastDate) < new Date(x.maxCreateDate)) {
-                  shared.notifications[id].lastCommentDate = x.maxCreateDate;
-                }
-                shared.notifications[id].count += x.count;
-              }
-            });
-            shared.messageInitialLoad = true;
-          });
-        }
+        channel.addEventListener("message", (e: unknown) => {
+          this.onBroadcastMessage(e);
+        });
 
         this.setStatus(0);
 
@@ -193,8 +139,7 @@ export const useWebsocketStore = defineStore({
                   }
                 });
                 (data.objects as RequestData).user?.map((x) => {
-                  if (shared.users[x.id]) Object.assign(shared.users[x.id], x);
-                  else shared.users[x.id] = x;
+                  shared.users[x.id] = x;
                 });
                 if (data.statuses) {
                   Object.entries(data.statuses).map(([x, y]) => {
@@ -208,9 +153,10 @@ export const useWebsocketStore = defineStore({
                 if (this.errorHandler) this.errorHandler(res);
                 break;
               case WebsocketResultType.Request:
-                shared.wsResultStore[res.id!] = res;
+                if (res.id) shared.wsResultStore[res.id] = res;
                 break;
               case WebsocketResultType.LastId:
+                console.log("🐣 WebSocket Ready!");
                 this.ready = true;
                 break;
               default:
@@ -218,13 +164,16 @@ export const useWebsocketStore = defineStore({
                   "This event type for websockets isn't tracked yet!"
                 );
             }
+            if (res.error) {
+              this.start(token);
+            }
           } catch (err) {
             console.error(err);
           }
         };
       });
     },
-    sendRequest(data: any, callback: ListenerFunc) {
+    sendRequest(data: RequestParameter, callback: ListenerFunc) {
       const id = uniqueIdGen();
       const req = {
         id,
@@ -240,12 +189,12 @@ export const useWebsocketStore = defineStore({
       this.whenReady(
         () => {
           console.log(`🥺 Sending request ${req.id}`, req);
-          this.websocket!.send(JSON.stringify(req));
+          this.websocket?.send(JSON.stringify(req));
           setTimeout(x, 30);
         },
         () => {
           console.log("📡 Sending request through channel to Leader", req);
-          channel.postMessage(JSON.stringify(req));
+          channel.postMessage(req);
           setTimeout(x, 30);
         }
       );
@@ -286,11 +235,11 @@ export const useWebsocketStore = defineStore({
       this.whenReady(
         () => {
           console.log(`️👣 Status change: room ${room} = ${status}`, req);
-          this.websocket!.send(JSON.stringify(req));
+          this.websocket?.send(JSON.stringify(req));
         },
         () => {
           console.log("📡 Sending status through channel to Leader", req);
-          channel.postMessage(JSON.stringify(req));
+          channel.postMessage(req);
         }
       );
     },

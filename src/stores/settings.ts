@@ -23,4 +23,5 @@ export const useSettingsStore = defineStore({
       ignoredUsers: [],
       markup: CommentMarkup._12y2,
     } as SettingsStoreType),
+  persist: true,
 });

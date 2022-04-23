@@ -10,7 +10,9 @@ const app = createApp(App);
 
 const pinia = createPinia();
 pinia.use(piniaPluginPersistedState);
-pinia.use(PiniaSharedState());
+pinia.use(
+  PiniaSharedState({ enable: false, initialize: false, type: "native" })
+);
 
 app.use(pinia);
 app.use(router);

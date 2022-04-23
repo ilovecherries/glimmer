@@ -8,8 +8,9 @@ import Scroller from "../Scroller.vue";
 const shared = useSharedStore();
 const settings = useSettingsStore();
 
-const { contents, activityChunks, users } = storeToRefs(shared);
-const { avatarSize, activityDisplayUsername, ignoredUsers } = storeToRefs(settings);
+const { contents, activityChunks, users, userlists } = storeToRefs(shared);
+const { avatarSize, activityDisplayUsername, ignoredUsers } =
+  storeToRefs(settings);
 </script>
 
 <template>
@@ -40,14 +41,16 @@ const { avatarSize, activityDisplayUsername, ignoredUsers } = storeToRefs(settin
           :src="
             avatarUrl(c.values.a || users[c.createUserId].avatar, avatarSize)
           "
-          :alt="`${users[c.createUserId].username}'s avatar`"
-          class="w-6 h-6 p-1 inline"
-          :title="users[c.createUserId].username"
+          :alt="`${users[c.createUserId]?.username || 'someone'}'s avatar`"
+          class="w-6 h-6 p-0.5 inline"
+          :title="users[c.createUserId]?.username || 'someone'"
         />
         <div class="inline" v-if="activityDisplayUsername">
           {{ c.values.n || users[c.createUserId].username }}:
         </div>
-        <div class="grow inline">{{ c.text }}</div>
+        <div class="grow inline">
+          {{ c.text.replace(/(\r\n|\n|\r)/gm, " ↲ ") }}
+        </div>
       </div>
     </div>
   </Scroller>

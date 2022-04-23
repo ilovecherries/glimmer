@@ -2,6 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+  .msg-icon-container {
+    @apply group-hover:flex hidden absolute right-2 -top-[1em]
+  }
+
+  .msg-icon-container > button {
+    @apply bg-white border-black px-2 py-0.5 border hover:bg-slate-100
+  }
+
+  .sidebar-button-container {
+    @apply grow justify-center flex hover:bg-slate-200 shrink-0 cursor-pointer
+  }
+}
+
 body, #app {
   font-family: roboto, sans-serif;
   position: fixed;
@@ -29,84 +43,12 @@ a[href] {
  box-shadow: inset 0px 0px 0px 1px rgb(0, 20, 80);
 }
 
-code pre {
+.🍂 pre {
  display:block;
  overflow-x:auto;
  padding:3px 5px;
  font-family: DroidSansMonoSlashed;
+ font-size: 0.8em;
+ line-height: 1em;
  box-shadow: inset 0px 0px 0px 1px rgb(0, 20, 80);
-}
-
-.hljs {
- color:#000;
- /* background:#fff */
-}
-.hljs-subst,
-.hljs-title {
- font-weight:400;
- color:#000
-}
-.hljs-comment,
-.hljs-quote {
- color:grey;
- font-style:italic
-}
-.hljs-meta {
- color:olive
-}
-.hljs-tag {
- background:#efefef
-}
-.hljs-keyword,
-.hljs-literal,
-.hljs-name,
-.hljs-section,
-.hljs-selector-class,
-.hljs-selector-id,
-.hljs-selector-tag,
-.hljs-type {
- font-weight:700;
- color:navy
-}
-.hljs-attribute,
-.hljs-link,
-.hljs-number,
-.hljs-regexp {
- font-weight:700;
- color:#00f
-}
-.hljs-link,
-.hljs-number,
-.hljs-regexp {
- font-weight:400
-}
-.hljs-string {
- color:green;
- font-weight:700
-}
-.hljs-bullet,
-.hljs-formula,
-.hljs-symbol {
- color:#000;
- background:#d0eded;
- font-style:italic
-}
-.hljs-doctag {
- text-decoration:underline
-}
-.hljs-template-variable,
-.hljs-variable {
- color:#660e7a
-}
-.hljs-addition {
- background:#baeeba
-}
-.hljs-deletion {
- background:#ffc8bd
-}
-.hljs-emphasis {
- font-style:italic
-}
-.hljs-strong {
- font-weight:700
 }
