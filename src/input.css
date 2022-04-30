@@ -2,18 +2,60 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  [data-theme="glimmer"] {
+      --color-document: #FCE6FF;
+      --maincolor: #000;
+      --color-item-hover: #DAB0E9;
+      --color-accent: #F2C7F8;
+      --color-text-accent: #FFF;
+      --color-accent-2: #A578AB;
+      --color-link: #036785;
+      --color-link-hover: #08BAB7;
+      --color-notification: #8587EC;
+      --color-notification-hover: #98A2EF;
+      --color-border: #000;
+  }
+
+  [data-theme="dark"] {
+      --color-document: #222;
+      --maincolor: #EEE;
+      --color-item-hover: #111;
+      --color-accent: #333;
+      --color-text-accent: #EEE;
+      --color-accent-2: #111;
+      --color-link: #9CE;
+      --color-link-hover: #5CE;
+      --color-notification: #228;
+      --color-notification-hover: #44A;
+      --color-border: #555;
+  }
+}
+
 @layer components {
   .msg-icon-container {
     @apply group-hover:flex hidden absolute right-2 -top-[1em]
   }
 
   .msg-icon-container > button {
-    @apply bg-white border-black px-2 py-0.5 border hover:bg-slate-100
+    @apply bg-accent border-bcol px-2 py-0.5 border hover:bg-item-hover
   }
 
   .sidebar-button-container {
-    @apply grow justify-center flex hover:bg-slate-200 shrink-0 cursor-pointer
+    @apply grow justify-center flex hover:bg-item-hover shrink-0 cursor-pointer
   }
+
+  a[href] {
+    @apply text-link hover:text-link-hover
+  }
+
+  .activity-bar {
+    @apply min-h-[1.5em] h-[1.5em] leading-[1.5em] border-b border-bcol
+  }
+}
+
+.chat-box {
+  box-shadow: inset 0px 0px 0px 1px var(--color-border);
 }
 
 body, #app {
@@ -35,10 +77,6 @@ body, #app {
   src: url("./fonts/DroidSansMonoSlashed.ttf");
 }
 
-a[href] {
-  color: #045;
-}
-
 .box-border {
  box-shadow: inset 0px 0px 0px 1px rgb(0, 20, 80);
 }
@@ -51,4 +89,8 @@ a[href] {
  font-size: 0.8em;
  line-height: 1em;
  box-shadow: inset 0px 0px 0px 1px rgb(0, 20, 80);
+}
+
+.🍂 img {
+  cursor: pointer;
 }

@@ -4,30 +4,23 @@ import { avatarUrl } from "@/lib/qcs/types/User";
 import { storeToRefs } from "pinia";
 import { nextTick, ref, watch } from "vue";
 import { useSettingsStore } from "@/stores/settings";
-import { useStateStore } from "@/stores/state";
 import MarkupRender from "markup2/MarkupRender.vue";
 import { API_DOMAIN } from "@/lib/qcs/qcs";
 import { useIdentityStore } from "@/stores/identity";
 import type { Comment } from "@/lib/qcs/types/Comment";
 import { RequestParameter } from "@/lib/qcs/types/RequestParameter";
 import { RequestSearchParameter } from "@/lib/qcs/types/RequestSearchParameter";
-import { useWebsocketStore } from "@/stores/websocket";
-import type { RequestData } from "@/lib/qcs/types/RequestData";
 import Scroller from "./Scroller.vue";
 import { rethreadMessages, sendRequest } from "../lib/helpers";
-import { render } from "../lib/helpers";
-import { LocalChatDraw } from "../lib/oldsbslib";
+import { render, last } from "../lib/helpers";
 
-const state = useStateStore();
 const shared = useSharedStore();
 const settings = useSettingsStore();
 const identity = useIdentityStore();
-const websocket = useWebsocketStore();
 
 const { commentChunks, userlists, users, contents } = storeToRefs(shared);
 const { avatarSize, nickname, ignoredUsers, commentPagination, markup } =
   storeToRefs(settings);
-const { openSidebar } = storeToRefs(state);
 
 const props = defineProps({
   contentId: Number,
@@ -47,23 +40,25 @@ let imageSrc = ref<null | string>(null);
 let imageFileUrl = ref<null | string>(null);
 let imageFileUrlEl = ref<null | HTMLInputElement>(null);
 
-let shouldScroll = false;
-let rethreading = false;
+let rethreading = ref(false);
 type RethreadMessage = {
   [key: number]: boolean;
 };
 let rethreadingMessages = ref<RethreadMessage>({});
+let rethreadStart = ref(-1);
+let rethreadEnd = ref(-1);
 let rethreadingContentId = 0;
 
 let sendingMessage = false;
 
 async function sendMessage() {
-  if (textboxContent.value.trim() === "" || sendingMessage) return;
+  if (!props.contentId || textboxContent.value.trim() === "" || sendingMessage)
+    return;
   sendingMessage = true;
 
   let msg: Partial<Comment> = {
     text: textboxContent.value.trim(),
-    contentId: props.contentId!,
+    contentId: props.contentId,
     values: {
       m: markup.value,
       a: identity.avatar,
@@ -75,8 +70,7 @@ async function sendMessage() {
   }
 
   try {
-    shouldScroll = true;
-    const req = await fetch(`https://${API_DOMAIN}/api/Write/message`, {
+    await fetch(`https://${API_DOMAIN}/api/Write/message`, {
       method: "POST",
       headers: identity.headers,
       body: JSON.stringify(msg),
@@ -95,6 +89,8 @@ function stopEdit() {
 }
 
 async function editMessage() {
+  if (!props.contentId) return;
+
   if (editContent.value.trim() === "") {
     await deleteMessage(editing.value);
     editing.value = -1;
@@ -104,19 +100,19 @@ async function editMessage() {
   let msg: Partial<Comment> = {
     id: editing.value,
     text: editContent.value.trim(),
-    contentId: props.contentId!,
+    contentId: props.contentId,
     values: {
       m: markup.value,
       a: identity.avatar,
     },
   };
 
-  if (nickname.value) {
-    msg.values!.n = nickname.value;
+  if (nickname.value && msg.values) {
+    msg.values.n = nickname.value;
   }
 
   try {
-    const req = await fetch(`https://${API_DOMAIN}/api/Write/message`, {
+    await fetch(`https://${API_DOMAIN}/api/Write/message`, {
       method: "POST",
       headers: identity.headers,
       body: JSON.stringify(msg),
@@ -129,7 +125,7 @@ async function editMessage() {
 
 async function deleteMessage(id: number) {
   try {
-    const req = await fetch(`https://${API_DOMAIN}/api/Delete/message/${id}`, {
+    await fetch(`https://${API_DOMAIN}/api/Delete/message/${id}`, {
       method: "POST",
       headers: identity.plaintTextHeaders,
     });
@@ -179,6 +175,7 @@ async function uploadImage() {
 let loadingOlderMessages = ref(false);
 function loadOlderMessages() {
   if (props.contentId) {
+    const contentId = props.contentId;
     loadingOlderMessages.value = true;
     const minId = commentChunks.value[props.contentId][0].comments[0].id;
     const search = new RequestParameter(
@@ -198,7 +195,7 @@ function loadOlderMessages() {
       data.user?.map((x) => shared.addUser(x));
       data.message?.map((x) => shared.addComment(x));
       shared.sortComments();
-      shared.rebuildCommentChunks(props.contentId!);
+      shared.rebuildCommentChunks(contentId);
       shared.rebuildActivityChunks();
       loadingOlderMessages.value = false;
     });
@@ -234,8 +231,10 @@ watch(imageData, () => {
   if (imageData.value) {
     var reader = new FileReader();
     reader.onload = function (event) {
-      imageFileUrl.value = null;
-      imageSrc.value = event.target!.result as string;
+      if (event.target) {
+        imageFileUrl.value = null;
+        imageSrc.value = event.target.result as string;
+      }
     };
     reader.readAsDataURL(imageData.value);
   }
@@ -266,12 +265,22 @@ function toggleIgnoreUser(uid: number) {
   }
 }
 
-async function rethread() {
-  const ids = Object.keys(rethreadingMessages.value).filter(
-    (x) => rethreadingMessages.value[x]
+function canRethread(comment: Comment): boolean {
+  return (
+    comment.createUserId === identity.id &&
+    rethreadStart.value <= comment.id &&
+    rethreadEnd.value >= comment.id
   );
-  await rethreadMessages(ids, 6661);
-  rethreadingMessages.value = {};
+}
+
+async function rethread(contentId: number) {
+  const ids = shared.comments
+    .filter((x) => x.contentId === props.contentId && canRethread(x))
+    .map((x) => x.id);
+  await rethreadMessages(ids, contentId);
+  rethreading.value = false;
+  rethreadStart.value = -1;
+  rethreadEnd.value = -1;
 }
 
 function resizeEditBox() {
@@ -288,44 +297,54 @@ function resizeEditBox() {
 </script>
 
 <template>
-  <div class="flex flex-col grow h-full">
+  <div class="flex flex-col grow">
     <div
-      class="w-full h-6 text-sm bg-slate-800 text-white"
+      class="w-full h-6 text-sm bg-slate-800 text-textColor"
       v-if="showContentName"
     >
       {{ contents[props.contentId]?.name }}
     </div>
-    <div class="h-10 w-full bg-slate-200" v-if="showUserlist">
-      <div
-        v-if="props.contentId && userlists[props.contentId]"
-        class="flex w-full"
-      >
+    <div class="h-8 md:h-10 w-full bg-accent flex" v-if="showUserlist">
+      <div class="grow">
         <div
-          v-for="u in Object.keys(userlists[props.contentId])"
-          :key="u"
-          class="relative"
+          v-if="props.contentId && userlists[props.contentId]"
+          class="flex w-full h-full"
         >
-          <img
-            :class="`w-10 h-10 peer ${
-              ignoredUsers.findIndex((x) => x === parseInt(u)) === -1
-                ? 'sepia-0'
-                : 'sepia'
-            }`"
-            :src="avatarUrl(users[parseInt(u)].avatar, avatarSize)"
-          />
           <div
-            class="hidden peer-hover:block hover:block absolute b-10 bg-slate-100 z-50 min-w-max"
+            v-for="u in Object.keys(userlists[props.contentId])"
+            :key="u"
+            class="relative h-full"
           >
-            <div>{{ users[parseInt(u)].username }}</div>
-            <div>{{ users[parseInt(u)].createDate }}</div>
+            <img
+              :class="`w-auto h-full peer ${
+                ignoredUsers.findIndex((x) => x === parseInt(u)) === -1
+                  ? 'sepia-0'
+                  : 'sepia'
+              }`"
+              :src="avatarUrl(users[parseInt(u)].avatar, avatarSize)"
+            />
             <div
-              @click="toggleIgnoreUser(parseInt(u))"
-              class="hover:cursor-pointer"
+              class="hidden peer-hover:block hover:block absolute b-10 bg-slate-100 z-10 min-w-max"
             >
-              Ignore User
+              <div>{{ users[parseInt(u)].username }}</div>
+              <div>{{ users[parseInt(u)].createDate }}</div>
+              <div
+                @click="toggleIgnoreUser(parseInt(u))"
+                class="hover:cursor-pointer"
+              >
+                Ignore User
+              </div>
             </div>
           </div>
         </div>
+      </div>
+      <div class="shrink-0 w-8 h-full">
+        <button
+          class="h-full w-full bg-accent-2"
+          @click="rethreading = !rethreading"
+        >
+          ...
+        </button>
       </div>
     </div>
     <div class="flex flex-col grow h-full">
@@ -333,7 +352,7 @@ function resizeEditBox() {
         v-if="props.contentId"
         :watch-value="
           (props.contentId &&
-            commentChunks[props.contentId]?.at(-1)?.comments?.at(-1)) ||
+            last(last(commentChunks[props.contentId])?.comments)) ||
           undefined
         "
       >
@@ -346,7 +365,13 @@ function resizeEditBox() {
             <div class="shrink-0">...</div>
             <div class="grow"></div>
           </div>
-          <button v-else @click="loadOlderMessages">LOAD OLDER MESSAGES</button>
+          <button
+            v-else
+            @click="loadOlderMessages"
+            class="text-link hover:text-link-hover"
+          >
+            LOAD OLDER MESSAGES
+          </button>
         </div>
         <div
           v-for="c in commentChunks[props.contentId]"
@@ -356,15 +381,20 @@ function resizeEditBox() {
         >
           <img
             :src="avatarUrl(c.avatar, avatarSize)"
-            class="w-12 h-12 mx-1 mr-2 rounded border border-black"
+            class="w-auto h-6 md:h-12 mx-1 md:mr-2 md:rounded border border-bcol"
           />
           <div class="grow">
             <div class="flex mb-1">
               <div class="grow">
                 <span v-if="c.nickname">
-                  {{ c.nickname }} ({{ c.username }}):
+                  {{ c.nickname }} (<router-link :to="`/user/${c.uid}`">{{
+                    c.username
+                  }}</router-link
+                  >):
                 </span>
-                <span v-else> {{ c.username }}: </span>
+                <router-link :to="`/user/${c.uid}`" v-else>
+                  {{ c.username }}:</router-link
+                >
               </div>
               <div class="text-xs text-gray italic">
                 {{ new Date(c.date).toLocaleTimeString() }}
@@ -372,21 +402,30 @@ function resizeEditBox() {
             </div>
             <div
               v-for="m in c.comments"
-              :class="`group chat-content my-0.5 grow hover:bg-gray-200 relative mb-1 ${
-                rethreading && rethreadingMessages[m.id] ? 'bg-green-200' : ''
+              :class="`group chat-content my-0.5 grow hover:bg-item-hover relative mb-1 ${
+                rethreading &&
+                m.createUserId === identity.id &&
+                rethreadStart <= m.id &&
+                rethreadEnd >= m.id
+                  ? 'bg-green-200'
+                  : ''
               }`"
               :key="m.id"
             >
               <div
                 v-if="m.createUserId === identity.id && rethreading"
-                class="absolute block -left-[1.5em] top-0"
+                class="absolute block -left-[3.5em] top-0"
               >
                 <input
                   type="checkbox"
-                  value="X"
-                  @click="
-                    rethreadingMessages[m.id] = !rethreadingMessages[m.id]
-                  "
+                  class="mx-2"
+                  :checked="rethreadStart === m.id"
+                  @click="rethreadStart = m.id"
+                />
+                <input
+                  type="checkbox"
+                  :checked="rethreadEnd === m.id"
+                  @click="rethreadEnd = m.id"
                 />
               </div>
               <div
@@ -418,20 +457,20 @@ function resizeEditBox() {
                         }
                       }
                     "
-                    class="w-full chat-box resize-none p-1"
+                    class="text-textColor bg-document w-full chat-box resize-none p-1 border-bcol"
                   ></textarea>
                 </div>
-                <div class="w-full flex bg-white">
+                <div class="w-full flex bg-document">
                   <div class="grow">
                     <button
-                      class="border-black py-1 px-3 hover:bg-slate-200 border-l border-r border-b"
+                      class="border-bcol py-1 px-3 hover:bg-item-hover border-l border-r border-b"
                       @click="stopEdit"
                     >
                       ❌
                     </button>
                   </div>
                   <button
-                    class="shrink-0 py-1 px-3 border-black hover:bg-slate-200 border-l border-r border-b"
+                    class="shrink-0 py-1 px-3 border-bcol hover:bg-item-hover border-l border-r border-b"
                     @click="editMessage"
                   >
                     ✉️
@@ -456,10 +495,10 @@ function resizeEditBox() {
         <div class="grow">RETHREADING</div>
         <input
           type="number"
-          class="text-black"
+          class="text-textColor"
           v-model="rethreadingContentId"
         />
-        <button @click="rethread">commit</button>
+        <button @click="rethread(rethreadingContentId)">commit</button>
       </div>
       <div class="shrink-0 h-12 w-full relative" v-if="showChatBox">
         <div
@@ -500,11 +539,11 @@ function resizeEditBox() {
         <div ref="$chatBox" class="h-12 w-full absolute" v-if="showChatBox">
           <textarea
             @keydown.enter.exact.prevent="sendMessage"
-            @keydown.up.exact.prevent="upArrowEdit"
+            @keydown.up.exact="upArrowEdit"
             @paste="detectImagePaste"
             @drop="detectImageDrop"
             v-model="textboxContent"
-            class="block h-full w-full p-1 chat-box resize-none"
+            class="block h-full w-full p-1 chat-box resize-none bg-document"
           />
         </div>
       </div>

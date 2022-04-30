@@ -3,20 +3,19 @@ import { useSettingsStore } from "@/stores/settings";
 import { useSharedStore } from "@/stores/shared";
 import { storeToRefs } from "pinia";
 import { avatarUrl } from "@/lib/qcs/types/User";
+import { last } from "@/lib/helpers";
 import Scroller from "../Scroller.vue";
 
 const shared = useSharedStore();
 const settings = useSettingsStore();
 
-const { contents, activityChunks, users, userlists } = storeToRefs(shared);
+const { contents, activityChunks, users } = storeToRefs(shared);
 const { avatarSize, activityDisplayUsername, ignoredUsers } =
   storeToRefs(settings);
 </script>
 
 <template>
-  <Scroller
-    :watch-value="activityChunks?.at(-1)?.comments?.at(-1) || undefined"
-  >
+  <Scroller :watch-value="last(last(activityChunks)?.comments) || undefined">
     <div
       v-for="a in activityChunks"
       :key="a.firstId"
@@ -26,7 +25,7 @@ const { avatarSize, activityDisplayUsername, ignoredUsers } =
         ).length !== 0
       "
     >
-      <div class="text-xl activity-bar">
+      <div class="text-l activity-bar">
         <router-link :to="`/page/${a.contentId}`">
           {{ contents[a.contentId].data.name }}
         </router-link>

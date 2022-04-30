@@ -4,7 +4,22 @@ module.exports = {
   theme: {
     extend: {
       backgroundImage: {
-        "sbPattern": "url('./Sb-bg-tile.png')",
+        sbPattern: "url('./Sb-bg-tile.png')",
+        glimmerSplash: "url('./splash.gif')",
+      },
+      colors: {
+        document: "var(--color-document)",
+        // document: "#E0F4EE",
+        "item-hover": "var(--color-item-hover)",
+        accent: "var(--color-accent)",
+        "accent-2": "var(--color-accent-2)",
+        link: "var(--color-link)",
+        "link-hover": "var(--color-link-hover)",
+        notification: "var(--color-notification)",
+        "notification-hover": "var(--color-notification-hover)",
+        textColor: "var(--maincolor)",
+        "accent-text": "var(--color-text-accent)",
+        bcol: "var(--color-border)",
       },
     },
   },

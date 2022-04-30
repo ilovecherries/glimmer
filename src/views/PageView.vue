@@ -7,10 +7,11 @@ import { useStateStore } from "@/stores/state";
 import { ContentState, useSharedStore } from "@/stores/shared";
 import { RoomStatus, useWebsocketStore } from "@/stores/websocket";
 import { storeToRefs } from "pinia";
-import { nextTick, watch } from "vue";
+import { nextTick, ref, watch } from "vue";
 import ChatView from "../components/ChatView.vue";
 import type { RequestData } from "@/lib/qcs/types/RequestData";
-import { sendRequest } from "@/lib/helpers";
+import { render, sendRequest } from "@/lib/helpers";
+import MarkupRender from "../../node_modules/markup2/MarkupRender.vue";
 
 const identity = useIdentityStore();
 const state = useStateStore();
@@ -23,6 +24,7 @@ const { headerText } = storeToRefs(state);
 const { avatarSize, titleNotifications } = storeToRefs(settings);
 const { commentChunks, contents, users, notifications } = storeToRefs(shared);
 const { loggedIn } = storeToRefs(identity);
+let showChat = ref(true);
 
 const props = defineProps({
   id: String,
@@ -151,16 +153,26 @@ watch(
 
 <template>
   <main class="h-full flex">
+    <div v-show="!showChat" class="grow p-2 flex flex-col w-full">
+      <div class="text-2xl font-bold">
+        {{ contents[parseInt(props.id!)]?.data?.name || "Unknown" }}
+      </div>
+      <div class="min-h-max">
+        <MarkupRender
+          :content="contents[parseInt(props.id!)]?.data?.text || '...'"
+          :lang="contents[parseInt(props.id!)]?.data?.values?.markupLang"
+          :render="render"
+        />
+      </div>
+    </div>
     <ChatView
       :contentId="parseInt(props.id!)"
       :showChatBox="loggedIn"
       :showUserlist="loggedIn"
+      v-show="showChat"
     />
   </main>
 </template>
 
 <style>
-.chat-box {
-  box-shadow: inset 0px 0px 0px 1px rgb(0, 20, 80);
-}
 </style>

@@ -11,18 +11,21 @@ import { GetSearchBackDate } from "./lib/qcs/qcs";
 import { RequestParameter } from "./lib/qcs/types/RequestParameter";
 import { RequestSearchParameter } from "./lib/qcs/types/RequestSearchParameter";
 import { sendRequest } from "./lib/helpers";
+import { useSettingsStore } from "./stores/settings";
 
 const identity = useIdentityStore();
 const state = useStateStore();
 const shared = useSharedStore();
+const settings = useSettingsStore();
 
 const { headerText, openSidebar, imageView } = storeToRefs(state);
 
 const { loggedIn, token } = storeToRefs(identity);
 const { messageInitialLoad } = storeToRefs(shared);
+const { theme } = storeToRefs(settings);
 
 const ws = useWebsocketStore();
-const { checkedLeader, websocket, ready } = storeToRefs(ws);
+const { checkedLeader, websocket } = storeToRefs(ws);
 
 function manageWS() {
   if (loggedIn.value && !websocket.value) ws.start(token.value);
@@ -107,28 +110,30 @@ watch(
 </script>
 
 <template>
-  <div class="h-full relative">
+  <div class="h-full relative bg-document text-textColor" :data-theme="theme">
     <div class="h-full flex flex-col dark dark:bg-slate-900">
-      <header class="flex h-7">
+      <header class="flex h-7 bg-accent-2">
         <div class="grow">
           <!-- <img
             src="./assets/glimmer_scaled.png"
             alt="Starlight Glimmer's Cutiemark"
             class="px-2 py-1 w-6 h-auto inline"
           /> -->
-          <h1 class="text-xl py-1 text-white inline">{{ headerText }}</h1>
+          <h1 class="text-xl py-auto px-1 text-accent-text inline">
+            {{ headerText }}
+          </h1>
         </div>
         <div class="h-full flex">
           <div
             v-if="loggedIn"
-            :class="`h-2 w-2 m-3 rounded-full ${
+            :class="`h-2 w-2 mx-3 my-auto rounded-full ${
               isLeader ? 'bg-yellow-300' : 'bg-blue-200'
             }`"
             title="Leader Status"
           ></div>
           <div
             v-if="loggedIn && isLeader"
-            :class="`h-2 w-2 m-3 rounded-full ${
+            :class="`h-2 w-2 mx-3 my-auto rounded-full ${
               websocket ? 'bg-green-400' : 'bg-red-600'
             }`"
             title="WebSocket Status"
@@ -136,15 +141,17 @@ watch(
         </div>
         <button
           @click="state.openSidebar = !state.openSidebar"
-          class="bg-slate-300 shrink-0"
+          class="bg-accent hover:bg-item-hover shrink-0 w-6 h-5 my-auto mx-1 px-1"
         >
-          Toggle Sidebar
+          =
         </button>
       </header>
-      <div class="flex w-full grow">
-        <div
-          :class="`h-full grow ${openSidebar ? 'hidden' : 'block'} md:block`"
-        >
+      <div
+        :class="`grid grid-cols-1 ${
+          openSidebar ? 'md:grid-cols-[3fr_2fr]' : ''
+        } w-full grow`"
+      >
+        <div :class="`h-full ${openSidebar ? 'hidden' : 'block'} md:block`">
           <RouterView />
         </div>
         <SideBar />
@@ -188,7 +195,7 @@ header {
 .flex-row > * {
   flex-shrink: 0;
 }
-main,
+/* main, */
 .grow {
   flex: 1 1 0;
   /* min-height: 0; /* i don't understand this either */

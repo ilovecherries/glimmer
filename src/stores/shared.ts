@@ -3,6 +3,7 @@ import type { Comment } from "@/lib/qcs/types/Comment";
 import { defineStore } from "pinia";
 import type { Content } from "@/lib/qcs/types/Content";
 import type * as WebsocketResult from "@/lib/qcs/types/WebsocketResult";
+import { useIdentityStore } from "./identity";
 
 export type UserStatus = {
   id: number;
@@ -312,6 +313,11 @@ export const useSharedStore = defineStore({
       return undefined;
     },
     addUser(user: User) {
+      const identity = useIdentityStore();
+      if (identity.id === user.id) {
+        identity.username = user.username;
+        identity.avatar = user.avatar;
+      }
       this.users[user.id] = user;
     },
     addContent(content: Content, state: ContentState) {
