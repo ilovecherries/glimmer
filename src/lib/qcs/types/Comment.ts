@@ -5,6 +5,8 @@ export enum CommentMarkup {
   plaintext = "plaintext",
 }
 
+export const MARKUPS = ["12y", "12y2", "bbcode", "plaintext"];
+
 export type CommentValues = {
   m?: string;
   n?: string;

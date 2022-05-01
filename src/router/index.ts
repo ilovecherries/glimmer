@@ -1,3 +1,4 @@
+import PageEditView from "@/views/PageEditView.vue";
 import { createRouter, createWebHashHistory } from "vue-router";
 import HomeView from "../views/HomeView.vue";
 import PageView from "../views/PageView.vue";
@@ -14,6 +15,12 @@ const router = createRouter({
       path: "/page/:id",
       name: "page",
       component: PageView,
+      props: true,
+    },
+    {
+      path: "/edit-page/:id",
+      name: "edit-page",
+      component: PageEditView,
       props: true,
     },
   ],

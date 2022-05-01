@@ -68,7 +68,9 @@ const search = (query: string) => {
           :src="avatarUrl(u.avatar, avatarSize)"
           class="h-6 w-6 border border-bcol inline"
         />
-        <div class="inline">{{ u.username }}</div>
+        <router-link :to="`/user/${u.id}`" class="inline">{{
+          u.username
+        }}</router-link>
       </div>
     </div>
   </div>

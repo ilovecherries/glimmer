@@ -25,7 +25,7 @@ const { avatarSize, activityDisplayUsername, ignoredUsers } =
         ).length !== 0
       "
     >
-      <div class="text-l activity-bar">
+      <div class="text-lg activity-bar">
         <router-link :to="`/page/${a.contentId}`">
           {{ contents[a.contentId].data.name }}
         </router-link>

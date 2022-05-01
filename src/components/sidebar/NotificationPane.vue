@@ -2,17 +2,15 @@
 import { storeToRefs } from "pinia";
 import { watch, ref } from "vue";
 import { useSharedStore } from "../../stores/shared";
-import { useSettingsStore } from "../../stores/settings";
 import { avatarUrl } from "@/lib/qcs/types/User";
 import type { Notification } from "../../stores/shared";
 import ActivityLogPane from "./ActivityLogPane.vue";
 import defaultPageIcon from "@/assets/SB-thread.png";
+import UserlistAvatar from "../UserlistAvatar.vue";
 
 const shared = useSharedStore();
-const settings = useSettingsStore();
 
 const { contents, notifications, userlists, users } = storeToRefs(shared);
-const { avatarSize, ignoredUsers } = storeToRefs(settings);
 
 let notificationsView = ref<Array<Notification>>([]);
 
@@ -47,26 +45,24 @@ watch(
         v-if="userlists[0]"
         class="flex w-full h-6 shrink-0 bg-accent border-b border-bcol"
       >
-        <div v-for="u in Object.keys(userlists[0])" :key="u" class="relative">
-          <img
-            :class="`w-auto h-full peer ${
-              ignoredUsers.findIndex((x) => x === parseInt(u)) === -1
-                ? 'sepia-0'
-                : 'sepia'
-            }`"
-            :src="avatarUrl(users[parseInt(u)].avatar, avatarSize)"
-          />
-          <div
-            class="bg-slate-50 min-w-max peer-hover:block hover:block hidden absolute top-6 left-0 z-10 border border-bcol p-1"
-          >
-            <div>{{ users[parseInt(u)].username }}</div>
+        <div
+          v-for="(u, index) in Object.keys(userlists[0]).map((x) =>
+            parseInt(x)
+          )"
+          :key="index"
+          class="relative"
+        >
+          <UserlistAvatar :uid="u">
+            <div>{{ users[u].username }}</div>
             <hr />
             <div>Currently Browsing</div>
             <div
               v-for="room in Object.keys(userlists).filter(
                 (x) =>
                   x !== '0' &&
-                  Object.keys(userlists[x]).findIndex((y) => y === u) !== -1
+                  Object.keys(userlists[x]).findIndex(
+                    (y) => parseInt(y) === u
+                  ) !== -1
               )"
               :key="room"
             >
@@ -74,12 +70,12 @@ watch(
                 {{ contents[parseInt(room)]?.data.name || "Unknown" }}
               </router-link>
             </div>
-          </div>
+          </UserlistAvatar>
         </div>
       </div>
-      <div class="grow overflow-y-scroll">
+      <div class="grow overflow-y w-full">
         <div
-          class="flex px-1 border-b border-bcol h-10"
+          class="flex px-1 w-full border-b border-bcol h-10"
           v-for="n in notificationsView"
           :key="n.contentId"
         >

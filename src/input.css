@@ -3,9 +3,25 @@
 @tailwind utilities;
 
 @layer base {
+  [data-theme="sbs"] {
+      --color-document: rgb(253, 253, 253);
+      --color-text: #000;
+      --color-item-hover: #adadad;
+      --color-accent: #bdbfbd;
+      --color-text-accent: #efefef;
+      --color-accent-2: #393939;
+      --color-link: #3077ae;
+      --color-link-hover: #50A7de;
+      --color-notification: #B22222;
+      --color-notification-hover: #F23434;
+      --color-border: rgba(24,24,24,.45);
+      --splash-image: url("./Sb-bg-logo.png");
+      --splash-opacity: 1;
+      --splash-size: 6em;
+  }
   [data-theme="glimmer"] {
       --color-document: #FCE6FF;
-      --maincolor: #000;
+      --color-text: #000;
       --color-item-hover: #DAB0E9;
       --color-accent: #F2C7F8;
       --color-text-accent: #FFF;
@@ -14,12 +30,15 @@
       --color-link-hover: #08BAB7;
       --color-notification: #8587EC;
       --color-notification-hover: #98A2EF;
-      --color-border: #000;
+      --color-border: #A578AB;
+      --splash-image: url('./splash.gif');
+      --splash-opacity: 0.25;
+      --splash-size: 14em;
   }
 
   [data-theme="dark"] {
       --color-document: #222;
-      --maincolor: #EEE;
+      --color-text: #EEE;
       --color-item-hover: #111;
       --color-accent: #333;
       --color-text-accent: #EEE;
@@ -29,6 +48,9 @@
       --color-notification: #228;
       --color-notification-hover: #44A;
       --color-border: #555;
+      --splash-image: url();
+      --splash-opacity: 0;
+      --splash-size: 0px;
   }
 }
 
@@ -45,12 +67,40 @@
     @apply grow justify-center flex hover:bg-item-hover shrink-0 cursor-pointer
   }
 
-  a[href] {
+  a {
     @apply text-link hover:text-link-hover
   }
 
   .activity-bar {
     @apply min-h-[1.5em] h-[1.5em] leading-[1.5em] border-b border-bcol
+  }
+
+  select, input, textarea, button {
+    @apply border border-bcol text-textColor bg-document
+  }
+
+  button {
+    @apply hover:bg-item-hover p-1
+  }
+
+  textarea {
+    @apply focus:outline-none
+  }
+
+  .🍂 h2 {
+    @apply text-4xl;
+  }
+
+  .🍂 h3 {
+    @apply text-3xl;
+  }
+
+  .🍂 h4 {
+    @apply text-2xl;
+  }
+
+  .🍂 h5 {
+    @apply text-xl;
   }
 }
 
@@ -79,6 +129,16 @@ body, #app {
 
 .box-border {
  box-shadow: inset 0px 0px 0px 1px rgb(0, 20, 80);
+}
+
+.🍂 {
+  --mainbg: var(--color-document);
+  --spoiler-bg: var(--color-document);
+  --maincolor: var(--color-text);
+}
+
+.🍂 summary {
+  background: var(--color-document) !important;
 }
 
 .🍂 pre {

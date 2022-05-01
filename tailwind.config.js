@@ -5,7 +5,7 @@ module.exports = {
     extend: {
       backgroundImage: {
         sbPattern: "url('./Sb-bg-tile.png')",
-        glimmerSplash: "url('./splash.gif')",
+        "sidebar-splash": "var(--splash-image)",
       },
       colors: {
         document: "var(--color-document)",
@@ -17,7 +17,7 @@ module.exports = {
         "link-hover": "var(--color-link-hover)",
         notification: "var(--color-notification)",
         "notification-hover": "var(--color-notification-hover)",
-        textColor: "var(--maincolor)",
+        textColor: "var(--color-text)",
         "accent-text": "var(--color-text-accent)",
         bcol: "var(--color-border)",
       },

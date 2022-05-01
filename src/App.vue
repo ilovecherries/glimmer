@@ -148,7 +148,7 @@ watch(
       </header>
       <div
         :class="`grid grid-cols-1 ${
-          openSidebar ? 'md:grid-cols-[3fr_2fr]' : ''
+          openSidebar ? 'md:grid-cols-[6fr_2fr]' : ''
         } w-full grow`"
       >
         <div :class="`h-full ${openSidebar ? 'hidden' : 'block'} md:block`">
@@ -175,7 +175,7 @@ watch(
           v-show="imageView?.show"
           :href="imageView?.url || ''"
           target="_blank"
-          class="p-1 bg-slate-100 max-w-fit bottom-0 left-0 absolute"
+          class="p-1 bg-accent-2 max-w-fit text-accent-text bottom-0 left-0 absolute"
         >
           {{ imageView?.url || "" }}
         </a>

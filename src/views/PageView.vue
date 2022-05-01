@@ -12,6 +12,7 @@ import ChatView from "../components/ChatView.vue";
 import type { RequestData } from "@/lib/qcs/types/RequestData";
 import { render, sendRequest } from "@/lib/helpers";
 import MarkupRender from "../../node_modules/markup2/MarkupRender.vue";
+import { onBeforeRouteLeave, onBeforeRouteUpdate } from "vue-router";
 
 const identity = useIdentityStore();
 const state = useStateStore();
@@ -56,21 +57,23 @@ const clearNotif = () => {
   } else setTimeout(clearNotif, 20);
 };
 
+const removeOldStatus = () => {
+  if (props.id) {
+    const id = parseInt(props.id);
+    websocket.setStatus(id, RoomStatus.notPresent);
+  }
+};
+
+onBeforeRouteLeave(removeOldStatus);
+onBeforeRouteUpdate(removeOldStatus);
+
 watch(
   () => props.id,
   async () => {
     if (props.id) {
       const id = parseInt(props.id);
       nextTick(() => {
-        if (oldPage && oldPage !== id) {
-          console.log(`${oldPage} -> ${id}`);
-          websocket.setStatus(oldPage, RoomStatus.notPresent);
-          websocket.setStatus(id);
-          oldPage = id;
-        } else if (!oldPage) {
-          websocket.setStatus(id);
-          oldPage = id;
-        }
+        websocket.setStatus(id);
       });
       if (
         contents.value[id] &&
@@ -152,10 +155,18 @@ watch(
 </script>
 
 <template>
-  <main class="h-full flex">
-    <div v-show="!showChat" class="grow p-2 flex flex-col w-full">
-      <div class="text-2xl font-bold">
-        {{ contents[parseInt(props.id!)]?.data?.name || "Unknown" }}
+  <main class="h-full flex flex-col">
+    <div
+      v-show="!showChat"
+      class="grow p-2 flex flex-col w-full overflow-scroll h-full"
+    >
+      <div class="text-2xl">
+        <span class="font-bold">
+          {{ contents[parseInt(props.id!)]?.data?.name || "Unknown" }}
+        </span>
+        <span>
+          [<router-link :to="`/edit-page/${props.id!}`">Edit</router-link>]
+        </span>
       </div>
       <div class="min-h-max">
         <MarkupRender
@@ -165,6 +176,10 @@ watch(
         />
       </div>
     </div>
+    <div
+      class="shrink-0 bg-bcol h-4 md:h-2 md:hover:h-6 hover:cursor-pointer"
+      @click="showChat = !showChat"
+    ></div>
     <ChatView
       :contentId="parseInt(props.id!)"
       :showChatBox="loggedIn"
@@ -173,6 +188,3 @@ watch(
     />
   </main>
 </template>
-
-<style>
-</style>

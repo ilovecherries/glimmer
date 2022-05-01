@@ -1,7 +1,7 @@
 import { CommentMarkup } from "@/lib/qcs/types/Comment";
 import { defineStore } from "pinia";
 
-export const THEMES = ["dark", "glimmer"];
+export const THEMES = ["sbs", "dark", "glimmer"];
 
 export type SettingsStoreType = {
   avatarSize: number;
@@ -25,7 +25,7 @@ export const useSettingsStore = defineStore({
       nickname: "",
       ignoredUsers: [],
       markup: CommentMarkup._12y2,
-      theme: "dark",
+      theme: "sbs",
     } as SettingsStoreType),
   persist: true,
 });

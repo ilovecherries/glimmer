@@ -13,6 +13,7 @@ import { RequestSearchParameter } from "@/lib/qcs/types/RequestSearchParameter";
 import Scroller from "./Scroller.vue";
 import { rethreadMessages, sendRequest } from "../lib/helpers";
 import { render, last } from "../lib/helpers";
+import UserlistAvatar from "./UserlistAvatar.vue";
 
 const shared = useSharedStore();
 const settings = useSettingsStore();
@@ -311,30 +312,19 @@ function resizeEditBox() {
           class="flex w-full h-full"
         >
           <div
-            v-for="u in Object.keys(userlists[props.contentId])"
+            v-for="u in Object.keys(userlists[props.contentId]).map((x) =>
+              parseInt(x)
+            )"
             :key="u"
             class="relative h-full"
           >
-            <img
-              :class="`w-auto h-full peer ${
-                ignoredUsers.findIndex((x) => x === parseInt(u)) === -1
-                  ? 'sepia-0'
-                  : 'sepia'
-              }`"
-              :src="avatarUrl(users[parseInt(u)].avatar, avatarSize)"
-            />
-            <div
-              class="hidden peer-hover:block hover:block absolute b-10 bg-slate-100 z-10 min-w-max"
-            >
-              <div>{{ users[parseInt(u)].username }}</div>
-              <div>{{ users[parseInt(u)].createDate }}</div>
-              <div
-                @click="toggleIgnoreUser(parseInt(u))"
-                class="hover:cursor-pointer"
-              >
+            <UserlistAvatar :uid="u">
+              <div>{{ users[u].username }}</div>
+              <div>{{ users[u].createDate }}</div>
+              <div @click="toggleIgnoreUser(u)" class="hover:cursor-pointer">
                 Ignore User
               </div>
-            </div>
+            </UserlistAvatar>
           </div>
         </div>
       </div>
@@ -387,12 +377,18 @@ function resizeEditBox() {
             <div class="flex mb-1">
               <div class="grow">
                 <span v-if="c.nickname">
-                  {{ c.nickname }} (<router-link :to="`/user/${c.uid}`">{{
-                    c.username
-                  }}</router-link
-                  >):
+                  <span class="font-bold">{{ c.nickname }}</span>
+                  <router-link
+                    class="text-textColor text-xs"
+                    :to="`/user/${c.uid}`"
+                  >
+                    ({{ c.username }})</router-link>:
                 </span>
-                <router-link :to="`/user/${c.uid}`" v-else>
+                <router-link
+                  class="text-textColor font-bold"
+                  :to="`/user/${c.uid}`"
+                  v-else
+                >
                   {{ c.username }}:</router-link
                 >
               </div>
@@ -503,7 +499,7 @@ function resizeEditBox() {
       <div class="shrink-0 h-12 w-full relative" v-if="showChatBox">
         <div
           v-if="imageSrc"
-          class="absolute top-0 right-4 w-60 bg-white m-1 -translate-y-full box-border"
+          class="absolute -top-4 right-4 w-60 bg-document m-1 -translate-y-full border border-bcol"
         >
           <img
             :src="imageSrc"
@@ -543,7 +539,7 @@ function resizeEditBox() {
             @paste="detectImagePaste"
             @drop="detectImageDrop"
             v-model="textboxContent"
-            class="block h-full w-full p-1 chat-box resize-none bg-document"
+            class="block h-full w-full p-1 chat-box resize-none bg-document focus:outline-none"
           />
         </div>
       </div>
