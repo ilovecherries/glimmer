@@ -4,7 +4,7 @@ import { useIdentityStore } from "../stores/identity";
 import type { Message } from "contentapi-ts-bindings/Views";
 import HighlightJS from "highlight.js";
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const Markup_Render_Dom = require("../../markup2/render");
+import Markup_Render_Dom from "@/../markup2-esm/render";
 import { useStateStore } from "@/stores/state";
 import type { SearchRequests } from "contentapi-ts-bindings/Search/SearchRequests";
 import type { LiveEvent } from "contentapi-ts-bindings/Live/LiveEvent";
@@ -55,27 +55,6 @@ export const rethreadMessages = async (
 };
 
 const Renderer = new Markup_Render_Dom();
-const URL_SCHEME = {
-  "sbs:"(url: URL) {
-    return "#" + url.pathname + url.search + url.hash;
-  },
-  "no-scheme:"(url: URL) {
-    url.protocol = "https:";
-    return url.href;
-  },
-  "javascript:"(url: URL) {
-    return "about:blank";
-  },
-};
-function filter_url(url: string) {
-  try {
-    let u = new URL(url, "no-scheme:/");
-    let f = URL_SCHEME[u.protocol];
-    return f ? f(u) : u.href;
-  } catch (e) {
-    return "about:blank";
-  }
-}
 
 Renderer.create["code"] = ({ text, lang }): HTMLPreElement => {
   const e = document.createElement("pre");
@@ -85,8 +64,9 @@ Renderer.create["code"] = ({ text, lang }): HTMLPreElement => {
   return e;
 };
 
-Renderer.create["image"] = ({ url, alt, width, height }): HTMLImageElement => {
-  const e = document.createElement("img");
+const oldImgCreate = Renderer.create["image"];
+Renderer.create["image"] = (props): HTMLImageElement => {
+  const e = oldImgCreate(props) as HTMLImageElement;
   e.addEventListener("click", () => {
     const state = useStateStore();
     state.imageView = {
@@ -94,11 +74,6 @@ Renderer.create["image"] = ({ url, alt, width, height }): HTMLImageElement => {
       show: true,
     };
   });
-  e.src = filter_url(url);
-  e.onerror = e.onload = e.removeAttribute.bind(e, "data-loading");
-  if (alt != null) e.alt = alt;
-  if (width) e.width = width;
-  if (height) e.height = height;
   return e;
 };
 

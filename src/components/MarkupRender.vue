@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
 
-const Markup_Parse_12y2 = require("../../markup2/parse");
-const Markup_Legacy = require("../../markup2/legacy");
-const Markup_Langs = require("../../markup2/langs");
-const Markup_Render_Dom = require("../../markup2/render");
+import Markup_Parse_12y2 from "@/../markup2-esm/parse";
+import Markup_Legacy from "@/../markup2-esm/legacy";
+import Markup_Langs from "@/../markup2-esm/langs";
+import Markup_Render_Dom from "@/../markup2-esm/render";
 
 const parser = new Markup_Parse_12y2();
 const langs = new Markup_Langs([parser, new Markup_Legacy()]);
@@ -50,7 +50,4 @@ watch(
 
 <style>
 @import "../../markup2/markup.css";
-.Markup img {
-  height: var(--T-embed-height);
-}
 </style>
