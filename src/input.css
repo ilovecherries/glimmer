@@ -15,7 +15,7 @@
       --color-notification: #B22222;
       --color-notification-hover: #F23434;
       --color-border: rgba(24,24,24,.45);
-      --splash-image: url("./Sb-bg-logo.png");
+      --splash-image: url("./assets/Sb-bg-logo.png");
       --splash-opacity: 1;
       --splash-size: 6em;
   }
@@ -31,7 +31,7 @@
       --color-notification: #8587EC;
       --color-notification-hover: #98A2EF;
       --color-border: #A578AB;
-      --splash-image: url('./splash.gif');
+      --splash-image: url('./assets/splash.gif');
       --splash-opacity: 0.25;
       --splash-size: 14em;
   }
