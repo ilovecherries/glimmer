@@ -1,7 +1,6 @@
 import { useWebsocketStore } from "@/stores/websocket";
 
 import { useIdentityStore } from "../stores/identity";
-import { API_DOMAIN } from "./qcs/qcs";
 import type { Message } from "contentapi-ts-bindings/Views";
 import HighlightJS from "highlight.js";
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -25,13 +24,17 @@ export const sendRequest = async (
       callback(a.data.objects);
     });
   } else {
-    const pageReq = await fetch(`https://${API_DOMAIN}/api/Request`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(search),
-    });
+    console.log(import.meta.env);
+    const pageReq = await fetch(
+      `https://${import.meta.env.VITE_API_DOMAIN}/api/Request`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(search),
+      }
+    );
     const pageJson: SearchResult = await pageReq.json();
     callback(pageJson.objects);
   }

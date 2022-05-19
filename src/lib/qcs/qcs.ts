@@ -5,12 +5,10 @@ import {
   SearchRequests,
 } from "contentapi-ts-bindings/Search/SearchRequests";
 
-export const API_DOMAIN = "qcs.shsbs.xyz";
-
 const SUBPAGES_PER_PAGE = 25;
 const COMMENTS_PER_PAGE = 25;
 
-export const api = new ContentAPI(API_DOMAIN);
+export const api = new ContentAPI(import.meta.env.VITE_API_DOMAIN);
 
 export const GetSearchBackDate = function (
   hours?: number,

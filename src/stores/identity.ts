@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { api, API_DOMAIN } from "@/lib/qcs/qcs";
+import { api } from "@/lib/qcs/qcs";
 import { ContentAPI_Session } from "contentapi-ts-bindings/Helpers";
 import type { User } from "contentapi-ts-bindings/Views/User";
 
@@ -16,15 +16,15 @@ interface IdentityStoreState {
 export const useIdentityStore = defineStore({
   id: "identity",
   state: () =>
-    ({
-      token: "",
-      id: 0,
-      username: "",
-      avatar: "0",
-      loggedIn: false,
-      session: undefined,
-      user: undefined,
-    } as IdentityStoreState),
+  ({
+    token: "",
+    id: 0,
+    username: "",
+    avatar: "0",
+    loggedIn: false,
+    session: undefined,
+    user: undefined,
+  } as IdentityStoreState),
   getters: {
     avatarUrl: (state) =>
       state.user?.avatar ? api.getFileURL(state.user.avatar, 0) : "",
@@ -57,7 +57,7 @@ export const useIdentityStore = defineStore({
     },
     async login(username: string, password: string) {
       try {
-        const req = await fetch(`https://${API_DOMAIN}/api/User/login`, {
+        const req = await fetch(`https://${import.meta.env.VITE_API_DOMAIN}/api/User/login`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

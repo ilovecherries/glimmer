@@ -4,7 +4,7 @@ import { storeToRefs } from "pinia";
 import { nextTick, ref, watch } from "vue";
 import { useSettingsStore } from "@/stores/settings";
 import MarkupRender from "./MarkupRender.vue";
-import { api, API_DOMAIN } from "@/lib/qcs/qcs";
+import { api } from "@/lib/qcs/qcs";
 import { useIdentityStore } from "@/stores/identity";
 import type { User, Message } from "contentapi-ts-bindings/Views";
 import Scroller from "./Scroller.vue";
@@ -146,14 +146,19 @@ async function uploadImage() {
     const formData = new FormData();
     formData.append("file", imageData.value as Blob);
     console.log(formData);
-    const res = await fetch(`https://${API_DOMAIN}/api/File`, {
-      method: "post",
-      headers: identity.emptyHeaders,
-      body: formData,
-    });
+    const res = await fetch(
+      `https://${import.meta.env.VITE_API_DOMAIN}/api/File`,
+      {
+        method: "post",
+        headers: identity.emptyHeaders,
+        body: formData,
+      }
+    );
     const data: any = await res.json();
     const hash = data.hash as string;
-    const url = `!https://${API_DOMAIN}/api/File/raw/${hash}`;
+    const url = `!https://${
+      import.meta.env.VITE_API_DOMAIN
+    }/api/File/raw/${hash}`;
     imageFileUrl.value = url;
     nextTick(() => {
       imageFileUrlEl.value?.focus();
@@ -168,8 +173,9 @@ let loadingOlderMessages = ref(false);
 function loadOlderMessages() {
   if (props.contentId) {
     const contentId = props.contentId;
+    const minId = commentChunks.value[props.contentId][0]?.comments[0]?.id;
+    if (minId === undefined) return;
     loadingOlderMessages.value = true;
-    const minId = commentChunks.value[props.contentId][0].comments[0].id;
     const search = new SearchRequests({ pid: props.contentId, maxId: minId }, [
       new SearchRequest(
         RequestType.message,

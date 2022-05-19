@@ -39,7 +39,7 @@ const { avatarSize, activityDisplayUsername, ignoredUsers } =
         <img
           :src="
             api.getFileURL(
-              c.values.a || users[c.createUserId].avatar,
+              c.values.a || users[c.createUserId]?.avatar,
               avatarSize
             )
           "
@@ -48,7 +48,7 @@ const { avatarSize, activityDisplayUsername, ignoredUsers } =
           :title="users[c.createUserId]?.username || 'someone'"
         />
         <span v-if="activityDisplayUsername">
-          {{ c.values.n || users[c.createUserId].username }}:
+          {{ c.values.n || users[c.createUserId]?.username || "someone" }}:
         </span>
         <span>
           {{ c.text.replace(/(\r\n|\n|\r)/gm, " ↲ ") }}

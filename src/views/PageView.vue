@@ -88,14 +88,14 @@ watch(
         const search = BasicPageDisplaySearch(id);
         const pageAction = (data: Record<string, object[]>) => {
           console.log("PAGE DATA:", data);
-          const page = (data.content as Content[])?.shift();
+          const page = (data.content as Content[])[0];
+          contents.value[id] = {
+            data: page,
+            state: ContentState.full,
+          };
           if (page) {
             headerText.value = page.name;
-            contents.value[id] = {
-              data: page,
-              state: ContentState.full,
-            };
-            data.users?.map((x) => shared.addUser(x as User));
+            data.user?.map((x) => shared.addUser(x as User));
             const messages = data.message;
             if (messages) {
               messages.map((m) => shared.addComment(m as Message));
