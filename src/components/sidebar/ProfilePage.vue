@@ -8,7 +8,7 @@ const identity = useIdentityStore();
 const settings = useSettingsStore();
 
 const { login, logout } = identity;
-const { loggedIn, username, avatar } = storeToRefs(identity);
+const { session, user } = storeToRefs(identity);
 const { avatarSize, nickname, theme } = storeToRefs(settings);
 
 function signIn(username: string, password: string) {
@@ -21,15 +21,18 @@ let formUsername = "",
 
 <template>
   <div class="grow">
-    <div v-if="loggedIn">
+    <div v-if="session">
       <img
-        :src="api.getFileURL(avatar, avatarSize)"
+        :src="user?.avatar ? api.getFileURL(user.avatar, avatarSize) : ''"
         class="w-6 h-6"
-        :alt="username + '\'s avatar'"
+        :alt="user?.username + '\'s avatar'"
       />
-      <span>Logged in as </span><b>{{ username }}</b>
+      <span>Logged in as </span><b>{{ user?.username || "Unknown" }}</b> (uid:
+      {{ user?.id }})
+      <div>Super?: {{ user?.super }}</div>
+      <div>Create date: {{ user?.createDate }}</div>
       <button class="block" @click="logout()">Log out</button>
-      <span>Nickname: </span><input type="text" v-model="nickname" />
+      <div><span>Nickname: </span><input type="text" v-model="nickname" /></div>
     </div>
     <div v-else>
       <div>

@@ -17,8 +17,8 @@ const { avatarSize } = storeToRefs(settings);
 
 let query = "";
 
-let users = ref<undefined | User[]>(undefined);
-let contents = ref<undefined | Content[]>(undefined);
+let users = ref<undefined | Partial<User>[]>(undefined);
+let contents = ref<undefined | Partial<Content>[]>(undefined);
 const limit = 15;
 
 const search = (query: string) => {
@@ -43,9 +43,13 @@ const search = (query: string) => {
       ),
     ]
   );
-  sendRequest(search, (data) => {
-    users.value = data.user as User[];
-    contents.value = data.content as Content[];
+  type QueryResult = {
+    user: Array<Pick<User, "username" | "id" | "avatar">>;
+    content: Array<Pick<Content, "name" | "id" | "values">>;
+  };
+  sendRequest<QueryResult>(search, (data) => {
+    users.value = data.user;
+    contents.value = data.content;
   });
 };
 </script>
@@ -67,7 +71,7 @@ const search = (query: string) => {
       <h1>Users</h1>
       <div v-for="u in users" :key="u.id">
         <img
-          :src="api.getFileURL(u.avatar, avatarSize)"
+          :src="u?.avatar ? api.getFileURL(u.avatar, avatarSize) : ''"
           class="h-6 w-6 border border-bcol inline"
         />
         <router-link :to="`/user/${u.id}`" class="inline">{{
