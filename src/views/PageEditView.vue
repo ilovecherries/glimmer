@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { BasicPageDisplaySearch } from "@/lib/qcs/qcs";
 import { nextTick, ref, watch } from "@vue/runtime-dom";
 import { onBeforeRouteLeave } from "vue-router";
 import { render, sendRequest } from "@/lib/helpers";
@@ -8,6 +7,8 @@ import { MARKUPS } from "contentapi-ts-bindings/Views/Extras/MarkupLanguage";
 import { useStateStore } from "@/stores/state";
 import { storeToRefs } from "pinia";
 import type { Content } from "contentapi-ts-bindings/Views";
+import { getPageRequest } from "contentapi-ts-bindings/Helpers";
+import type { GetPageResult } from "contentapi-ts-bindings/Helpers";
 
 const state = useStateStore();
 const { headerText } = storeToRefs(state);
@@ -27,8 +28,8 @@ watch(
   async () => {
     if (props.id) {
       const pid = parseInt(props.id);
-      const search = BasicPageDisplaySearch(pid);
-      const pageAction = (data: Record<string, object[]>) => {
+      const search = getPageRequest(pid);
+      const pageAction = (data: GetPageResult) => {
         const page = data.content?.shift() as Content;
         console.log(page);
         if (page) {
@@ -55,7 +56,7 @@ watch(
           throw new Error("Page wasn't returned from the API.");
         }
       };
-      sendRequest(search, pageAction);
+      sendRequest<GetPageResult>(search, pageAction);
     }
   },
   { immediate: true }

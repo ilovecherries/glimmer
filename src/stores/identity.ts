@@ -16,15 +16,15 @@ interface IdentityStoreState {
 export const useIdentityStore = defineStore({
   id: "identity",
   state: () =>
-  ({
-    token: "",
-    id: 0,
-    username: "",
-    avatar: "0",
-    loggedIn: false,
-    session: undefined,
-    user: undefined,
-  } as IdentityStoreState),
+    ({
+      token: "",
+      id: 0,
+      username: "",
+      avatar: "0",
+      loggedIn: false,
+      session: undefined,
+      user: undefined,
+    } as IdentityStoreState),
   getters: {
     avatarUrl: (state) =>
       state.user?.avatar ? api.getFileURL(state.user.avatar, 0) : "",
@@ -45,7 +45,8 @@ export const useIdentityStore = defineStore({
       if (token) this.token = token;
       this.session = new ContentAPI_Session(api, this.token);
       try {
-        const user = await this.session!.getUserInfo();
+        const user = (await this.session?.getUserInfo()) || undefined;
+        if (!user) this.logout();
         this.user = user;
         this.username = user.username;
         this.avatar = user.avatar;
@@ -57,13 +58,16 @@ export const useIdentityStore = defineStore({
     },
     async login(username: string, password: string) {
       try {
-        const req = await fetch(`https://${import.meta.env.VITE_API_DOMAIN}/api/User/login`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ username, password }),
-        });
+        const req = await fetch(
+          `https://${import.meta.env.VITE_API_DOMAIN}/api/User/login`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ username, password }),
+          }
+        );
         switch (req.status) {
           case 200: {
             const token = await req.text();

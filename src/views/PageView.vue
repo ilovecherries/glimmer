@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { BasicPageDisplaySearch } from "@/lib/qcs/qcs";
 import { useIdentityStore } from "@/stores/identity";
 import { useSettingsStore } from "@/stores/settings";
 import { useStateStore } from "@/stores/state";
@@ -11,10 +10,12 @@ import ChatView from "../components/ChatView.vue";
 import { render, sendRequest } from "@/lib/helpers";
 import MarkupRender from "@/components/MarkupRender.vue";
 import { onBeforeRouteLeave, onBeforeRouteUpdate } from "vue-router";
-import { Status } from "contentapi-ts-bindings/Helpers";
+import {
+  getPageRequest,
+  Status,
+  type GetPageResult,
+} from "contentapi-ts-bindings/Helpers";
 import { api } from "@/lib/qcs/qcs";
-import type { SearchResult } from "contentapi-ts-bindings/Search/SearchResult";
-import type { Content, Message, User } from "contentapi-ts-bindings/Views";
 
 const identity = useIdentityStore();
 const state = useStateStore();
@@ -85,20 +86,20 @@ watch(
         return;
       }
       try {
-        const search = BasicPageDisplaySearch(id);
-        const pageAction = (data: Record<string, object[]>) => {
+        const search = getPageRequest(id);
+        const pageAction = (data: GetPageResult) => {
           console.log("PAGE DATA:", data);
-          const page = (data.content as Content[])[0];
-          contents.value[id] = {
-            data: page,
-            state: ContentState.full,
-          };
+          const page = data.content?.shift();
           if (page) {
+            contents.value[id] = {
+              data: page,
+              state: ContentState.full,
+            };
             headerText.value = page.name;
-            data.user?.map((x) => shared.addUser(x as User));
+            data.user?.map(shared.addUser);
             const messages = data.message;
             if (messages) {
-              messages.map((m) => shared.addComment(m as Message));
+              messages.map(shared.addComment);
               shared.sortComments();
               shared.rebuildCommentChunks(id);
               shared.rebuildActivityChunks();
@@ -108,7 +109,7 @@ watch(
             throw new Error("Page wasn't returned from the API.");
           }
         };
-        sendRequest(search, pageAction);
+        sendRequest<GetPageResult>(search, pageAction);
       } catch (err) {
         console.error(err);
       }

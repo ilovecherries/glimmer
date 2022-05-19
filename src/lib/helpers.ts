@@ -9,22 +9,20 @@ import { useStateStore } from "@/stores/state";
 import type { SearchRequests } from "contentapi-ts-bindings/Search/SearchRequests";
 import type { LiveEvent } from "contentapi-ts-bindings/Live/LiveEvent";
 import type { SearchResult } from "contentapi-ts-bindings/Search/SearchResult";
+import type { LiveData } from "contentapi-ts-bindings/Live/LiveData";
 
-export type RequestCallback = (data: Record<string, Array<object>>) => void;
-
-export const sendRequest = async (
+export const sendRequest = async <T = Record<string, Array<object>>>(
   search: SearchRequests,
-  callback: RequestCallback
+  callback: (data: T) => void
 ) => {
   const identity = useIdentityStore();
 
   if (identity.loggedIn) {
     const ws = useWebsocketStore();
     ws.sendRequest(search, (a: LiveEvent) => {
-      callback(a.data.objects);
+      callback((a.data as unknown as LiveData<T>).objects);
     });
   } else {
-    console.log(import.meta.env);
     const pageReq = await fetch(
       `https://${import.meta.env.VITE_API_DOMAIN}/api/Request`,
       {
@@ -35,7 +33,7 @@ export const sendRequest = async (
         body: JSON.stringify(search),
       }
     );
-    const pageJson: SearchResult = await pageReq.json();
+    const pageJson: SearchResult<T> = await pageReq.json();
     callback(pageJson.objects);
   }
 };

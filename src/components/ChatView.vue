@@ -186,9 +186,10 @@ function loadOlderMessages() {
       ),
       new SearchRequest(RequestType.user, "*", "id in @message.createUserId"),
     ]);
-    sendRequest(search, (data) => {
-      data.user?.map((x) => shared.addUser(x as User));
-      data.message?.map((x) => shared.addComment(x as Message));
+    type OlderMessageRequest = { user: User[]; message: Message[] };
+    sendRequest<OlderMessageRequest>(search, (data) => {
+      data.user?.map(shared.addUser);
+      data.message?.map(shared.addComment);
       shared.sortComments();
       shared.rebuildCommentChunks(contentId);
       shared.rebuildActivityChunks();

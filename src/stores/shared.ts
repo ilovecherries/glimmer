@@ -1,6 +1,5 @@
 import { defineStore } from "pinia";
 import type { Message, Content, User } from "contentapi-ts-bindings/Views";
-import type * as WebsocketResult from "@/lib/qcs/types/WebsocketResult";
 import { useIdentityStore } from "./identity";
 
 export type UserStatus = {
@@ -41,10 +40,7 @@ export type UserContainer = {
   [key: number]: User;
 };
 
-export type UserlistContainer = {
-  // room id, userlist
-  [key: string]: WebsocketResult.StatusData;
-};
+export type UserlistContainer = Record<string, Record<number, string>>;
 
 export enum ContentState {
   partial,
@@ -79,7 +75,6 @@ export type SharedStoreState = {
   users: UserContainer;
   userlists: UserlistContainer;
   // userlists: Map<number, WebsocketResult.StatusData>;
-  myStatuses: WebsocketResult.StatusData;
   messageInitialLoad: boolean;
   notifications: NotificationContainer;
 };
@@ -94,7 +89,6 @@ export const useSharedStore = defineStore({
       commentChunks: {},
       users: {},
       userlists: {},
-      myStatuses: {},
       messageInitialLoad: false,
       notifications: {},
     } as SharedStoreState;
@@ -190,7 +184,7 @@ export const useSharedStore = defineStore({
           p.push(c);
         return p;
       },
-        []);
+      []);
       this.comments = this.comments.sort((a, b) => {
         return a.id - b.id;
       });
