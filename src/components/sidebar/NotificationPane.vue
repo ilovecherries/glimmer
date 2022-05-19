@@ -2,11 +2,11 @@
 import { storeToRefs } from "pinia";
 import { watch, ref } from "vue";
 import { useSharedStore } from "../../stores/shared";
-import { avatarUrl } from "@/lib/qcs/types/User";
 import type { Notification } from "../../stores/shared";
 import ActivityLogPane from "./ActivityLogPane.vue";
 import defaultPageIcon from "@/assets/SB-thread.png";
 import UserlistAvatar from "../UserlistAvatar.vue";
+import { api } from "@/lib/qcs/qcs";
 
 const shared = useSharedStore();
 
@@ -17,7 +17,6 @@ let notificationsView = ref<Array<Notification>>([]);
 watch(
   () => notifications.value,
   () => {
-    console.log("notifs", notifications.value);
     if (notifications.value) {
       const notifs: Array<Notification> = Object.keys(notifications.value).map(
         (n: string) => notifications.value[parseInt(n)]
@@ -73,7 +72,7 @@ watch(
           </UserlistAvatar>
         </div>
       </div>
-      <div class="grow overflow-y w-full">
+      <div class="grow overflow-y-auto w-full">
         <div
           class="flex px-1 w-full border-b border-bcol h-10"
           v-for="n in notificationsView"
@@ -81,11 +80,13 @@ watch(
         >
           <router-link
             :to="`/page/${n.contentId}`"
-            class="py-1 grow h-full w-full my-1"
+            class="py-1 grow h-full w-full my-1 truncate"
           >
             <img
               v-if="contents[n.contentId].data.values?.thumbnail"
-              :src="avatarUrl(contents[n.contentId].data.values.thumbnail)"
+              :src="
+                api.getFileURL(contents[n.contentId].data.values.thumbnail!, 0)
+              "
               alt=""
               class="border rounded border-bcol w-auto h-4 inline"
             />

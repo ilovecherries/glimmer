@@ -1,28 +1,30 @@
 import { useWebsocketStore } from "@/stores/websocket";
-import type { RequestParameter } from "./qcs/types/RequestParameter";
 
 import { useIdentityStore } from "../stores/identity";
-import type { WebsocketResult } from "./qcs/types/WebsocketResult";
-import type { RequestData } from "./qcs/types/RequestData";
-import type { SearchResult } from "./qcs/types/SearchResult";
 import { API_DOMAIN } from "./qcs/qcs";
-import type { Comment } from "./qcs/types/Comment";
+import type { Message } from "contentapi-ts-bindings/Views";
 import HighlightJS from "highlight.js";
-import { Markup_Render_Html } from "markup2/render";
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const Markup_Render_Dom = require("../../markup2/render");
 import { useStateStore } from "@/stores/state";
+import type { SearchRequests } from "contentapi-ts-bindings/Search/SearchRequests";
+import type { LiveEvent } from "contentapi-ts-bindings/Live/LiveEvent";
+import type { SearchResult } from "contentapi-ts-bindings/Search/SearchResult";
 
-export type RequestCallback = (data: RequestData) => void;
+export type RequestCallback = (
+  data: Record<string, Record<string, object>>
+) => void;
 
 export const sendRequest = async (
-  search: RequestParameter,
+  search: SearchRequests,
   callback: RequestCallback
 ) => {
   const identity = useIdentityStore();
 
   if (identity.loggedIn) {
     const ws = useWebsocketStore();
-    ws.sendRequest(search, (a: WebsocketResult) => {
-      callback(a.data.objects as RequestData);
+    ws.sendRequest(search, (a: LiveEvent) => {
+      callback(a.data.objects);
     });
   } else {
     const pageReq = await fetch(`https://${API_DOMAIN}/api/Request`, {
@@ -40,7 +42,7 @@ export const sendRequest = async (
 export const rethreadMessages = async (
   messageIds: number[],
   contentId: number
-): Promise<Comment[]> => {
+): Promise<Message[]> => {
   const identity = useIdentityStore();
   if (identity.loggedIn) {
     const params = {
@@ -56,14 +58,14 @@ export const rethreadMessages = async (
         body: JSON.stringify(params),
       }
     );
-    const pageJson: Array<Comment> = await pageReq.json();
+    const pageJson: Array<Message> = await pageReq.json();
     return pageJson;
   } else {
     throw new Error("You need to be logged in to rethread messages.");
   }
 };
 
-const Renderer = new Markup_Render_Html();
+const Renderer = new Markup_Render_Dom();
 const URL_SCHEME = {
   "sbs:"(url: URL) {
     return "#" + url.pathname + url.search + url.hash;

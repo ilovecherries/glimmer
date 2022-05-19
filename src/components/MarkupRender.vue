@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
 
-import { Markup_Parse_12y2 } from "markup2/parse";
-import { Markup_Langs } from "markup2/langs";
-import { Markup_Render_Html } from "markup2/render";
+const Markup_Parse_12y2 = require("../../markup2/parse");
+const Markup_Legacy = require("../../markup2/legacy");
+const Markup_Langs = require("../../markup2/langs");
+const Markup_Render_Dom = require("../../markup2/render");
 
-const parse = new Markup_Parse_12y2();
-const langs = new Markup_Langs({ "12y2": parse.parse });
-const render = new Markup_Render_Html();
+const parser = new Markup_Parse_12y2();
+const langs = new Markup_Langs([parser, new Markup_Legacy()]);
+const render = new Markup_Render_Dom();
 
 const props = defineProps({
   content: String,
@@ -18,19 +19,18 @@ const props = defineProps({
 let $el = ref<HTMLDivElement | null>(null);
 
 watch(
-  () => props,
+  () => [props, $el],
   () => {
     if ($el.value !== null) {
       if (props && props.content !== undefined) {
         try {
-          const tree = langs.parse(props.content, props.lang || "plaintext");
-          let el: DocumentFragment;
-          if (props.render) {
-            el = props.render(tree);
-          } else {
-            el = render.render(tree);
-          }
-          $el.value.replaceChildren(el);
+          const tree = langs.parse(
+            props.content,
+            props.lang || "plaintext",
+            {}
+          );
+          if (props.render) props.render(tree, $el.value);
+          else render.render(tree, $el.value);
         } catch (e) {
           console.error(e);
           if ($el.value) {
@@ -45,9 +45,9 @@ watch(
 </script>
 
 <template>
-  <span ref="$el" class="🍂"></span>
+  <span ref="$el" class="Markup"></span>
 </template>
 
 <style>
-@import "markup2/markup.css";
+@import "../../markup2/markup.css";
 </style>

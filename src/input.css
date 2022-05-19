@@ -131,26 +131,28 @@ body, #app {
  box-shadow: inset 0px 0px 0px 1px rgb(0, 20, 80);
 }
 
-.🍂 {
-  --mainbg: var(--color-document);
-  --spoiler-bg: var(--color-document);
-  --maincolor: var(--color-text);
+.Markup {
+  --T-col: var(--color-text);
+  --T-bg: var(--color-document);
+  --T-border-col: var(--color-border);
+  --T-link-color: var(--color-link);
+  --T-link-hover-color: var(--color-link-hover);
 }
 
 .🍂 summary {
   background: var(--color-document) !important;
 }
 
-.🍂 pre {
- display:block;
- overflow-x:auto;
- padding:3px 5px;
- font-family: DroidSansMonoSlashed;
- font-size: 0.8em;
- line-height: 1em;
- box-shadow: inset 0px 0px 0px 1px rgb(0, 20, 80);
+.Markup pre {
+  display:block;
+  overflow-x:auto;
+  padding:3px 5px;
+  font-family: DroidSansMonoSlashed;
+  font-size: 0.8em;
+  line-height: 1em;
+  box-shadow: inset 0px 0px 0px 1px rgb(0, 20, 80);
 }
 
-.🍂 img {
+.Markup img {
   cursor: pointer;
 }

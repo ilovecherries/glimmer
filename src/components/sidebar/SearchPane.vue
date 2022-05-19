@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import { sendRequest } from "@/lib/helpers";
-import { RequestParameter } from "@/lib/qcs/types/RequestParameter";
-import { RequestSearchParameter } from "@/lib/qcs/types/RequestSearchParameter";
-import type { User } from "@/lib/qcs/types/User";
 import { ref } from "@vue/runtime-dom";
-import { avatarUrl } from "@/lib/qcs/types/User";
 import { useSettingsStore } from "@/stores/settings";
 import { storeToRefs } from "pinia";
 import ThreadImage from "@/assets/SB-thread.png";
-import type { Content } from "@/lib/qcs/types/Content";
+import type { User, Content } from "contentapi-ts-bindings/Views";
+import { api } from "@/lib/qcs/qcs";
+import {
+  SearchRequest,
+  SearchRequests,
+} from "contentapi-ts-bindings/Search/SearchRequests";
+import { RequestType } from "contentapi-ts-bindings/Search/RequestType";
 
 const settings = useSettingsStore();
 const { avatarSize } = storeToRefs(settings);
@@ -20,20 +22,20 @@ let contents = ref<undefined | Content[]>(undefined);
 const limit = 15;
 
 const search = (query: string) => {
-  const search = new RequestParameter(
+  const search = new SearchRequests(
     {
       text: `%${query}%`,
     },
     [
-      new RequestSearchParameter(
-        "user",
+      new SearchRequest(
+        RequestType.user,
         "username,id,avatar",
         "username LIKE @text",
         "id",
         limit
       ),
-      new RequestSearchParameter(
-        "content",
+      new SearchRequest(
+        RequestType.content,
         "name,id,values",
         "name LIKE @text",
         "id",
@@ -42,8 +44,8 @@ const search = (query: string) => {
     ]
   );
   sendRequest(search, (data) => {
-    users.value = data.user;
-    contents.value = data.content;
+    users.value = data.user as User[];
+    contents.value = data.content as Content[];
   });
 };
 </script>
@@ -65,7 +67,7 @@ const search = (query: string) => {
       <h1>Users</h1>
       <div v-for="u in users" :key="u.id">
         <img
-          :src="avatarUrl(u.avatar, avatarSize)"
+          :src="api.getFileURL(u.avatar, avatarSize)"
           class="h-6 w-6 border border-bcol inline"
         />
         <router-link :to="`/user/${u.id}`" class="inline">{{

@@ -3,15 +3,19 @@ import { RouterView } from "vue-router";
 import SideBar from "@/components/SideBar.vue";
 import { useIdentityStore } from "./stores/identity";
 import { useWebsocketStore } from "./stores/websocket";
-import { ref, watch, watchEffect } from "vue";
+import { watch } from "vue";
 import { useStateStore } from "./stores/state";
 import { storeToRefs } from "pinia";
 import { ContentState, useSharedStore } from "./stores/shared";
 import { GetSearchBackDate } from "./lib/qcs/qcs";
-import { RequestParameter } from "./lib/qcs/types/RequestParameter";
-import { RequestSearchParameter } from "./lib/qcs/types/RequestSearchParameter";
 import { sendRequest } from "./lib/helpers";
 import { useSettingsStore } from "./stores/settings";
+import {
+  SearchRequest,
+  SearchRequests,
+} from "contentapi-ts-bindings/Search/SearchRequests";
+import type { Content } from "contentapi-ts-bindings/Views";
+import { RequestType } from "contentapi-ts-bindings/Search/RequestType";
 
 const identity = useIdentityStore();
 const state = useStateStore();
@@ -20,47 +24,47 @@ const settings = useSettingsStore();
 
 const { headerText, openSidebar, imageView } = storeToRefs(state);
 
-const { loggedIn, token } = storeToRefs(identity);
+const { session } = storeToRefs(identity);
 const { messageInitialLoad } = storeToRefs(shared);
 const { theme } = storeToRefs(settings);
 
 const ws = useWebsocketStore();
-const { checkedLeader, websocket } = storeToRefs(ws);
+const { socket } = storeToRefs(ws);
 
 function manageWS() {
-  if (loggedIn.value && !websocket.value) ws.start(token.value);
-  if (!loggedIn.value && websocket.value) ws.stop();
+  if (session?.value && !socket?.value) ws.start(session.value);
+  if (!session?.value && socket?.value) ws.stop();
 }
 
-watch(loggedIn, async () => {
-  manageWS();
-});
-
-watchEffect(() => {
-  manageWS();
-});
+watch(
+  () => session?.value,
+  async () => {
+    manageWS();
+  },
+  { immediate: true }
+);
 
 watch(
-  [messageInitialLoad, checkedLeader],
+  [messageInitialLoad],
   () => {
-    if (checkedLeader.value && shared && !messageInitialLoad.value) {
-      const search = new RequestParameter(
+    if (shared && !messageInitialLoad.value) {
+      const search = new SearchRequests(
         {
           yesterday: GetSearchBackDate(24),
         },
         [
-          new RequestSearchParameter(
-            "message_aggregate",
+          new SearchRequest(
+            RequestType.message_aggregate,
             "contentId,count,maxId,minId,createUserId,maxCreateDate",
             "createDate > @yesterday"
           ),
-          new RequestSearchParameter(
-            "content",
+          new SearchRequest(
+            RequestType.content,
             "id,values,keywords,votes,text,commentCount,name,createUserId",
             "id in @message_aggregate.contentId"
           ),
-          new RequestSearchParameter(
-            "user",
+          new SearchRequest(
+            RequestType.user,
             "*",
             "id in @content.createUserId"
           ),
@@ -68,8 +72,11 @@ watch(
       );
       console.log("🏄 Getting initial Message Aggregate to populate activity");
       sendRequest(search, (data) => {
+        console.log(data);
         const shared = useSharedStore();
-        data.content?.map((x) => shared.addContent(x, ContentState.partial));
+        data.content?.map((x: Content) =>
+          shared.addContent(x, ContentState.partial)
+        );
         data.user?.map(shared.addUser);
         data.message_aggregate?.map((x) => {
           const id = x.contentId;
@@ -93,20 +100,6 @@ watch(
   },
   { immediate: true }
 );
-
-let isLeader = ref(false);
-watch(
-  [loggedIn, websocket],
-  () => {
-    if (loggedIn.value) {
-      ws.whenReady(
-        () => (isLeader.value = true),
-        () => (isLeader.value = false)
-      );
-    }
-  },
-  { immediate: true }
-);
 </script>
 
 <template>
@@ -114,27 +107,20 @@ watch(
     <div class="h-full flex flex-col dark dark:bg-slate-900">
       <header class="flex h-7 bg-accent-2">
         <div class="grow">
-          <!-- <img
+          <img
             src="./assets/glimmer_scaled.png"
             alt="Starlight Glimmer's Cutiemark"
             class="px-2 py-1 w-6 h-auto inline"
-          /> -->
+          />
           <h1 class="text-xl py-auto px-1 text-accent-text inline">
             {{ headerText }}
           </h1>
         </div>
         <div class="h-full flex">
           <div
-            v-if="loggedIn"
+            v-if="session"
             :class="`h-2 w-2 mx-3 my-auto rounded-full ${
-              isLeader ? 'bg-yellow-300' : 'bg-blue-200'
-            }`"
-            title="Leader Status"
-          ></div>
-          <div
-            v-if="loggedIn && isLeader"
-            :class="`h-2 w-2 mx-3 my-auto rounded-full ${
-              websocket ? 'bg-green-400' : 'bg-red-600'
+              socket ? 'bg-green-400' : 'bg-red-600'
             }`"
             title="WebSocket Status"
           ></div>

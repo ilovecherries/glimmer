@@ -1,4 +1,4 @@
-import { CommentMarkup } from "@/lib/qcs/types/Comment";
+import type { MarkupLanguage } from "contentapi-ts-bindings/Views";
 import { defineStore } from "pinia";
 
 export const THEMES = ["sbs", "dark", "glimmer"];
@@ -10,7 +10,7 @@ export type SettingsStoreType = {
   activityDisplayUsername: boolean;
   nickname: string;
   ignoredUsers: Array<number>;
-  markup: CommentMarkup;
+  markup: MarkupLanguage;
   theme: string;
 };
 
@@ -24,7 +24,7 @@ export const useSettingsStore = defineStore({
       activityDisplayUsername: true,
       nickname: "",
       ignoredUsers: [],
-      markup: CommentMarkup._12y2,
+      markup: "12y2",
       theme: "sbs",
     } as SettingsStoreType),
   persist: true,

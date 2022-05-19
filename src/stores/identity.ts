@@ -1,18 +1,33 @@
 import { defineStore } from "pinia";
-import { API_DOMAIN } from "@/lib/qcs/qcs";
-import { avatarUrl, type User } from "@/lib/qcs/types/User";
+import { api, API_DOMAIN } from "@/lib/qcs/qcs";
+import { ContentAPI_Session } from "contentapi-ts-bindings/Helpers";
+import type { User } from "contentapi-ts-bindings/Views/User";
+
+interface IdentityStoreState {
+  token: string;
+  id: number;
+  username: string;
+  avatar: string;
+  loggedIn: boolean;
+  session?: ContentAPI_Session;
+  user?: User;
+}
 
 export const useIdentityStore = defineStore({
   id: "identity",
-  state: () => ({
-    token: "",
-    id: 0,
-    username: "",
-    avatar: "0",
-    loggedIn: false,
-  }),
+  state: () =>
+    ({
+      token: "",
+      id: 0,
+      username: "",
+      avatar: "0",
+      loggedIn: false,
+      session: undefined,
+      user: undefined,
+    } as IdentityStoreState),
   getters: {
-    avatarUrl: (state) => avatarUrl(state.avatar),
+    avatarUrl: (state) =>
+      state.user?.avatar ? api.getFileURL(state.user.avatar, 0) : "",
     headers: (state) => ({
       Authorization: `Bearer ${state.token}`,
       "Content-Type": "application/json",
@@ -28,12 +43,10 @@ export const useIdentityStore = defineStore({
   actions: {
     async refresh(token?: string) {
       if (token) this.token = token;
-
+      this.session = new ContentAPI_Session(api, this.token);
       try {
-        const meReq = await fetch(`https://${API_DOMAIN}/api/User/me`, {
-          headers: this.headers,
-        });
-        const user: User = await meReq.json();
+        const user = await this.session!.getUserInfo();
+        this.user = user;
         this.username = user.username;
         this.avatar = user.avatar;
         this.id = user.id;
@@ -68,9 +81,9 @@ export const useIdentityStore = defineStore({
       this.$reset();
     },
   },
-  persist: true,
-  share: {
-    enable: true,
-    initialize: true,
+  persist: {
+    afterRestore: (context) => {
+      if (context.store.token) context.store.refresh();
+    },
   },
 });

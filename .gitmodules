@@ -1,3 +1,4 @@
 [submodule "markup2"]
 	path = markup2
 	url = https://github.com/12Me21/markup2.git
+	branch = style

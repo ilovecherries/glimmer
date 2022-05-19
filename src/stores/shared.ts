@@ -1,7 +1,5 @@
-import type { User } from "@/lib/qcs/types/User";
-import type { Comment } from "@/lib/qcs/types/Comment";
 import { defineStore } from "pinia";
-import type { Content } from "@/lib/qcs/types/Content";
+import type { Message, Content, User } from "contentapi-ts-bindings/Views";
 import type * as WebsocketResult from "@/lib/qcs/types/WebsocketResult";
 import { useIdentityStore } from "./identity";
 
@@ -14,7 +12,7 @@ export type UserStatus = {
 export interface Chunk {
   firstId: number;
   lastId: number;
-  comments: Array<Comment>;
+  comments: Array<Message>;
 }
 
 export interface CommentChunk extends Chunk {
@@ -35,7 +33,7 @@ export interface ActivityChunk extends Chunk {
 
 export type CommentContainer = {
   // room id, comments
-  [key: number]: Array<Comment>;
+  [key: number]: Array<Message>;
 };
 
 export type UserContainer = {
@@ -63,10 +61,6 @@ export type ContentContainer = {
   [key: number]: ContentBox;
 };
 
-export type WebsocketResultContainer = {
-  [key: string]: WebsocketResult.WebsocketResult;
-};
-
 export type Notification = {
   count: number;
   lastCommentDate: string;
@@ -79,14 +73,13 @@ export type NotificationContainer = {
 
 export type SharedStoreState = {
   contents: ContentContainer;
-  comments: Array<Comment>;
+  comments: Array<Message>;
   activityChunks: Array<ActivityChunk>;
   commentChunks: CommentChunkContainer;
   users: UserContainer;
   userlists: UserlistContainer;
   // userlists: Map<number, WebsocketResult.StatusData>;
   myStatuses: WebsocketResult.StatusData;
-  wsResultStore: WebsocketResultContainer;
   messageInitialLoad: boolean;
   notifications: NotificationContainer;
 };
@@ -102,13 +95,12 @@ export const useSharedStore = defineStore({
       users: {},
       userlists: {},
       myStatuses: {},
-      wsResultStore: {},
       messageInitialLoad: false,
       notifications: {},
     } as SharedStoreState;
   },
   actions: {
-    updateActivityChunks(comment: Comment) {
+    updateActivityChunks(comment: Message) {
       const { contentId } = comment;
       const pushChunk = () => {
         this.activityChunks.push({
@@ -128,7 +120,7 @@ export const useSharedStore = defineStore({
         current.lastId = comment.id;
       }
     },
-    updateCommentChunks(comment: Comment) {
+    updateCommentChunks(comment: Message) {
       const roomId = comment.contentId;
       const user = this.users[comment.createUserId];
       const username = user.username;
@@ -184,20 +176,20 @@ export const useSharedStore = defineStore({
     },
     sortComments() {
       this.comments = this.comments.reduce(function (
-        p: Array<Comment>,
-        c: Comment
+        p: Array<Message>,
+        c: Message
       ) {
         // if the next object's id is not found in the output array
         // push the object into the output array
         if (
-          !p.some(function (el: Comment) {
+          !p.some(function (el: Message) {
             return el.id === c.id;
           })
         )
           p.push(c);
         return p;
       },
-      []);
+        []);
       this.comments = this.comments.sort((a, b) => {
         return a.id - b.id;
       });
@@ -213,7 +205,7 @@ export const useSharedStore = defineStore({
       this.activityChunks = [];
       this.comments.map((x) => this.updateActivityChunks(x));
     },
-    addComment(comment: Comment) {
+    addComment(comment: Message) {
       this.comments.push(comment);
       this.updateCommentChunks(comment);
       this.updateActivityChunks(comment);
@@ -250,7 +242,7 @@ export const useSharedStore = defineStore({
         }
       }
     },
-    editInChunks(chunks: Array<Chunk>, comment: Comment) {
+    editInChunks(chunks: Array<Chunk>, comment: Message) {
       const commentId = comment.id;
       for (let i = 0; i < chunks.length; i++) {
         if (chunks[i].firstId <= commentId && chunks[i].lastId >= commentId) {
@@ -263,7 +255,7 @@ export const useSharedStore = defineStore({
         }
       }
     },
-    deleteComment(comment: Comment) {
+    deleteComment(comment: Message) {
       const { id, contentId } = comment;
       const commentIndex = this.comments.findIndex((x) => x.id === id);
       if (commentIndex > -1) {
@@ -273,7 +265,7 @@ export const useSharedStore = defineStore({
         this.deleteFromChunks(this.activityChunks, id);
       }
     },
-    editComment(comment: Comment) {
+    editComment(comment: Message) {
       const { id, contentId } = comment;
       const commentIndex = this.comments.findIndex((x) => x.id === id);
       if (commentIndex > -1) {
@@ -302,16 +294,6 @@ export const useSharedStore = defineStore({
         }
       }
     },
-    getRequestData(
-      requestId: string
-    ): undefined | WebsocketResult.WebsocketResult {
-      if (this.wsResultStore[requestId]) {
-        const data = Object.assign({}, this.wsResultStore[requestId]);
-        delete this.wsResultStore[requestId];
-        return data;
-      }
-      return undefined;
-    },
     addUser(user: User) {
       const identity = useIdentityStore();
       if (identity.id === user.id) {
@@ -329,9 +311,5 @@ export const useSharedStore = defineStore({
           state,
         };
     },
-  },
-  share: {
-    enable: true,
-    initialize: true,
   },
 });

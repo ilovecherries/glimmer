@@ -1,10 +1,16 @@
-import { RequestParameter } from "./types/RequestParameter";
-import { RequestSearchParameter } from "./types/RequestSearchParameter";
+import { ContentAPI } from "contentapi-ts-bindings/Helpers";
+import { RequestType } from "contentapi-ts-bindings/Search/RequestType";
+import {
+  SearchRequest,
+  SearchRequests,
+} from "contentapi-ts-bindings/Search/SearchRequests";
 
 export const API_DOMAIN = "qcs.shsbs.xyz";
 
 const SUBPAGES_PER_PAGE = 25;
 const COMMENTS_PER_PAGE = 25;
+
+export const api = new ContentAPI(API_DOMAIN);
 
 export const GetSearchBackDate = function (
   hours?: number,
@@ -22,14 +28,14 @@ export const BasicPageDisplaySearch = function (
   commentPage = 0,
   subpagesPerPage: number = SUBPAGES_PER_PAGE,
   commentsPerPage: number = COMMENTS_PER_PAGE
-): RequestParameter {
-  const search = new RequestParameter(
+): SearchRequests {
+  const search = new SearchRequests(
     {
       pageid: id,
       filetype: 3,
     },
     [
-      new RequestSearchParameter("content", "*", "id = @pageid"),
+      new SearchRequest(RequestType.content, "*", "id = @pageid"),
       //Subpages: we want most fields, but not SOME big/expensive fields. Hence ~
       // new RequestSearchParameter(
       //   "content",
@@ -40,8 +46,8 @@ export const BasicPageDisplaySearch = function (
       //   subpagesPerPage * subpagePage,
       //   "subpages"
       // ),
-      new RequestSearchParameter(
-        "message",
+      new SearchRequest(
+        RequestType.message,
         "*",
         "contentId = @pageid and !notdeleted() and !null(module)",
         "id_desc",
@@ -52,8 +58,8 @@ export const BasicPageDisplaySearch = function (
       // new RequestSearchParameter("watch", "*", "contentId = @pageid"), //This is YOUR watch (the requester)
       // new RequestSearchParameter("vote", "*", "contentId = @pageid"), //This is YOUR vote (the requester)
       // And then users in everything
-      new RequestSearchParameter(
-        "user",
+      new SearchRequest(
+        RequestType.user,
         "*",
         "id in @message.createUserId or id in @content.createUserId"
       ),

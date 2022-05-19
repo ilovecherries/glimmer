@@ -1,7 +1,7 @@
-import PageEditView from "@/views/PageEditView.vue";
 import { createRouter, createWebHashHistory } from "vue-router";
-import HomeView from "../views/HomeView.vue";
-import PageView from "../views/PageView.vue";
+const PageEditView = () => import("@/views/PageEditView.vue");
+const HomeView = () => import("../views/HomeView.vue");
+const PageView = () => import("../views/PageView.vue");
 
 const router = createRouter({
   history: createWebHashHistory(),

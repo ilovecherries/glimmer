@@ -1,247 +1,136 @@
-import { API_DOMAIN, GetSearchBackDate } from "@/lib/qcs/qcs";
-import type { RequestData } from "@/lib/qcs/types/RequestData";
-import { RequestParameter } from "@/lib/qcs/types/RequestParameter";
-import { RequestSearchParameter } from "@/lib/qcs/types/RequestSearchParameter";
-import type { WebsocketRequest } from "@/lib/qcs/types/WebsocketRequest";
+import { UserAction } from "contentapi-ts-bindings/Enums";
 import {
-  WebsocketEventAction,
-  WebsocketEventType,
-  WebsocketResultType,
-  type StatusData,
-  type WebsocketResult,
-} from "@/lib/qcs/types/WebsocketResult";
-import { BroadcastChannel, createLeaderElection } from "broadcast-channel";
+  Status,
+  type ContentAPI_Session,
+  type ContentAPI_Socket,
+  type ContentAPI_Socket_Function,
+} from "contentapi-ts-bindings/Helpers";
+import { LiveEventType } from "contentapi-ts-bindings/Live/LiveEvent";
+import { WebSocketResponseType } from "contentapi-ts-bindings/Live/WebSocketResponse";
+import type { Content, Message, User } from "contentapi-ts-bindings/Views";
 import { defineStore } from "pinia";
 import { ContentState, useSharedStore } from "./shared";
-import { uniqueIdGen } from "./state";
-
-const channel = new BroadcastChannel("glimmer-ws");
-const elector = createLeaderElection(channel);
-
-export type ListenerFunc = (a: WebsocketResult) => void;
+import type { UserlistResult } from "contentapi-ts-bindings/Live/UserlistResult";
+import type { SearchRequests } from "contentapi-ts-bindings/Search/SearchRequests";
 
 export type WebsocketStoreState = {
-  lastId: undefined | number;
-  websocket: undefined | WebSocket;
-  errorHandler: undefined | ListenerFunc;
-  requests: Map<string, ListenerFunc>;
-  checkedLeader: boolean;
-  ready: boolean;
+  socket?: ContentAPI_Socket;
 };
-
-export enum RoomStatus {
-  active = "active",
-  notPresent = "",
-}
-
-function getWebSocket(token: string, lastId?: number): WebSocket {
-  const params = new URLSearchParams();
-  params.set("token", token);
-  if (lastId) params.set("lastId", lastId.toString());
-  return new WebSocket(`wss://${API_DOMAIN}/api/live/ws?${params.toString()}`);
-}
 
 export const useWebsocketStore = defineStore({
   id: "websocket",
   state: () => {
     return {
-      lastId: undefined,
-      websocket: undefined,
-      errorHandler: undefined,
-      requests: new Map(),
-      checkedLeader: false,
-      ready: false,
+      socket: undefined,
     } as WebsocketStoreState;
   },
   actions: {
-    onBroadcastMessage(event: unknown) {
-      this.whenReady(() => {
-        console.log("📨 Message received through channel, sending:", event);
-        this.websocket?.send(JSON.stringify(event));
-      });
-    },
-    start(token: string) {
+    start(session: ContentAPI_Session) {
       console.log("💤 Checking WebSocket status");
-      setTimeout(() => {
-        this.checkedLeader = true;
-      }, 500);
-      elector.awaitLeadership().then(() => {
-        this.checkedLeader = true;
-        if (this.websocket) return;
-        this.websocket = getWebSocket(token, this.lastId);
-        console.log("👑 WebSocket Leadership Taken");
+      if (!session) {
+        return;
+      }
+      if (this.socket) {
+        return;
+      }
+      this.socket = session.createSocket();
+      console.log("👑 WebSocket Started");
 
-        const shared = useSharedStore();
-
-        channel.addEventListener("message", (e: unknown) => {
-          this.onBroadcastMessage(e);
-        });
-
-        this.setStatus(0);
-
-        this.websocket.onclose = () => {
-          this.start(token);
-        };
-
-        this.websocket.onmessage = (event) => {
-          try {
-            const res = JSON.parse(event.data) as WebsocketResult;
-
-            console.log("📦️ Received Message", res);
-
-            switch (res.type) {
-              case WebsocketResultType.Live: {
-                if (res.data.lastId) this.lastId = res.data.lastId;
-                const data = res.data.objects.message_event;
-                data.content?.map((x) => {
-                  if (shared.contents[x.id])
-                    Object.assign(shared.contents[x.id].data, x);
-                  else {
-                    shared.contents[x.id] = {
-                      data: x,
-                      state: ContentState.partial,
-                    };
-                  }
-                });
-                data.user?.map((x) => shared.addUser(x));
-
-                const events = res.data.events;
-                events?.map((e) => {
-                  if (e.type === WebsocketEventType.message) {
-                    const x = data.message?.find((x) => x.id === e.refId);
-                    if (x)
-                      switch (e.action) {
-                        case WebsocketEventAction.create:
-                          shared.addComment(x);
-                          break;
-                        case WebsocketEventAction.delete:
-                          shared.deleteComment(x);
-                          break;
-                        case WebsocketEventAction.update:
-                          shared.editComment(x);
-                          break;
-                      }
-                  }
-                });
-                break;
-              }
-              // eslint-disable-next-line no-fallthrough
-              case WebsocketResultType.UserlistUpdate: {
-                const data = res.data;
-                (data.objects as RequestData).content?.map((x) => {
-                  if (shared.contents[x.id])
-                    Object.assign(shared.contents[x.id], x);
-                  else {
-                    shared.contents[x.id] = {
-                      data: x,
-                      state: ContentState.partial,
-                    };
-                  }
-                });
-                (data.objects as RequestData).user?.map((x) => {
-                  shared.users[x.id] = x;
-                });
-                if (data.statuses) {
-                  Object.entries(data.statuses).map(([x, y]) => {
-                    shared.userlists[parseInt(x)] = y;
-                  });
-                }
-                break;
-              }
-              case WebsocketResultType.BadToken:
-              case WebsocketResultType.Unexpected:
-                if (this.errorHandler) this.errorHandler(res);
-                break;
-              case WebsocketResultType.Request:
-                if (res.id) shared.wsResultStore[res.id] = res;
-                break;
-              case WebsocketResultType.LastId:
-                console.log("🐣 WebSocket Ready!");
-                this.ready = true;
-                break;
-              default:
-                console.warn(
-                  "This event type for websockets isn't tracked yet!"
-                );
-            }
-            if (res.error) {
-              this.start(token);
-            }
-          } catch (err) {
-            console.error(err);
-          }
-        };
-      });
-    },
-    sendRequest(data: RequestParameter, callback: ListenerFunc) {
-      const id = uniqueIdGen();
-      const req = {
-        id,
-        data,
-        type: "request",
-      } as WebsocketRequest;
       const shared = useSharedStore();
-      const x = () => {
-        const data = shared.getRequestData(id);
-        if (data) callback(data);
-        else setTimeout(x, 30);
-      };
-      this.whenReady(
-        () => {
-          console.log(`🥺 Sending request ${req.id}`, req);
-          this.websocket?.send(JSON.stringify(req));
-          setTimeout(x, 30);
-        },
-        () => {
-          console.log("📡 Sending request through channel to Leader", req);
-          channel.postMessage(req);
-          setTimeout(x, 30);
+
+      this.setStatus(0);
+
+      this.socket.callback = (res) => {
+        try {
+          console.log("📦️ Received Message", res);
+
+          switch (res.type) {
+            case LiveEventType.live: {
+              const data = res.data.objects[WebSocketResponseType.message];
+              data.content?.map((x) => {
+                const c = x as Content;
+                if (shared.contents[c.id]) {
+                  Object.assign(shared.contents[c.id].data, x);
+                } else {
+                  shared.contents[c.id] = {
+                    data: c,
+                    state: ContentState.partial,
+                  };
+                }
+              });
+              data.user?.map((x) => shared.addUser(x as User));
+
+              const events = res.data.events;
+              events?.map((e) => {
+                if (e.type === WebSocketResponseType.message) {
+                  const x = data.message?.find(
+                    (x) => (x as Message).id === e.refId
+                  ) as Message;
+                  if (x) {
+                    switch (e.action) {
+                      case UserAction.create:
+                        shared.addComment(x);
+                        break;
+                      case UserAction.delete:
+                        shared.deleteComment(x);
+                        break;
+                      case UserAction.update:
+                        shared.editComment(x);
+                        break;
+                    }
+                  }
+                }
+              });
+              break;
+            }
+            case LiveEventType.userlistupdate: {
+              const data = res.data as unknown as UserlistResult;
+              data.objects.content?.map((x) => {
+                const c = x as Content;
+                console.log(c);
+                if (shared.contents[c.id]) {
+                  Object.assign(shared.contents[c.id], x);
+                } else {
+                  shared.contents[c.id] = {
+                    data: c,
+                    state: ContentState.partial,
+                  };
+                }
+              });
+              data.objects.user?.map((x) => {
+                const u = x as User;
+                shared.users[u.id] = u;
+              });
+              if (data.statuses) {
+                Object.entries(data.statuses).map(([x, y]) => {
+                  shared.userlists[parseInt(x)] = y;
+                });
+              }
+              break;
+            }
+            case LiveEventType.badtoken:
+            case LiveEventType.unexpected:
+              break;
+            default:
+              console.warn("This event type for websockets isn't tracked yet!");
+          }
+        } catch (err) {
+          console.error(err);
         }
-      );
+      };
+    },
+    sendRequest(data: SearchRequests, callback: ContentAPI_Socket_Function) {
+      this.socket?.sendRequest(data, callback);
     },
     stop() {
-      this.websocket?.close();
-      this.websocket = undefined;
+      this.socket?.socket.close();
+      this.socket = undefined;
     },
-    setErrorHandler(func: ListenerFunc) {
-      this.errorHandler = func;
+    whenReady(func: () => void) {
+      this.socket?.whenReady(func);
     },
-    whenReady(func: () => void, notLeader?: () => void) {
-      try {
-        if (!this.checkedLeader || elector.isLeader) {
-          const x = () => {
-            if (this.ready) func();
-            else if (!elector.isLeader && this.checkedLeader && notLeader)
-              notLeader();
-            else setTimeout(x, 20);
-          };
-          setTimeout(x, 20);
-        } else if (notLeader) {
-          notLeader();
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    },
-    setStatus(room: number, status = RoomStatus.active) {
-      const data: StatusData = {};
-      data[room] = status;
-
-      const req: WebsocketRequest = {
-        type: "setuserstatus",
-        data,
-        id: uniqueIdGen(),
-      };
-      this.whenReady(
-        () => {
-          console.log(`️👣 Status change: room ${room} = ${status}`, req);
-          this.websocket?.send(JSON.stringify(req));
-        },
-        () => {
-          console.log("📡 Sending status through channel to Leader", req);
-          channel.postMessage(req);
-        }
-      );
+    setStatus(room: number, status = Status.active) {
+      this.socket?.setStatus(room, status);
     },
   },
 });

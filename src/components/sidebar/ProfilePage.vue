@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { useIdentityStore } from "@/stores/identity";
 import { storeToRefs } from "pinia";
-import { avatarUrl } from "@/lib/qcs/types/User";
 import { useSettingsStore, THEMES } from "@/stores/settings";
+import { api } from "@/lib/qcs/qcs";
 
 const identity = useIdentityStore();
 const settings = useSettingsStore();
@@ -23,7 +23,7 @@ let formUsername = "",
   <div class="grow">
     <div v-if="loggedIn">
       <img
-        :src="avatarUrl(avatar, avatarSize)"
+        :src="api.getFileURL(avatar, avatarSize)"
         class="w-6 h-6"
         :alt="username + '\'s avatar'"
       />

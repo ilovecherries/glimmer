@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { useSettingsStore } from "@/stores/settings";
 import { storeToRefs } from "pinia";
-import { avatarUrl } from "@/lib/qcs/types/User";
 import { useSharedStore } from "@/stores/shared";
+import { api } from "@/lib/qcs/qcs";
 
 const settings = useSettingsStore();
 const shared = useSharedStore();
@@ -21,7 +21,7 @@ const props = defineProps({
         ? 'sepia-0'
         : 'sepia'
     }`"
-    :src="avatarUrl(users[props.uid].avatar, avatarSize)"
+    :src="api.getFileURL(users[props.uid || 0].avatar, avatarSize)"
   />
   <div
     class="hidden peer-hover:block hover:block absolute b-10 bg-document text-textColor z-10 min-w-max p-2 border border-bcol rounded-b"

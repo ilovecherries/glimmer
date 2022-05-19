@@ -592,26 +592,6 @@ textarea:focus {
   outline-offset: 2px;
 }
 
-.🍂 h2 {
-  font-size: 2.25rem;
-  line-height: 2.5rem;
-}
-
-.🍂 h3 {
-  font-size: 1.875rem;
-  line-height: 2.25rem;
-}
-
-.🍂 h4 {
-  font-size: 1.5rem;
-  line-height: 2rem;
-}
-
-.🍂 h5 {
-  font-size: 1.25rem;
-  line-height: 1.75rem;
-}
-
 .visible {
   visibility: visible;
 }
@@ -808,12 +788,12 @@ textarea:focus {
   height: var(--splash-size);
 }
 
-.h-10 {
-  height: 2.5rem;
-}
-
 .h-4 {
   height: 1rem;
+}
+
+.h-10 {
+  height: 2.5rem;
 }
 
 .max-h-fit {
@@ -969,6 +949,12 @@ textarea:focus {
   overflow-y: scroll;
 }
 
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .text-ellipsis {
   text-overflow: ellipsis;
 }
@@ -1065,12 +1051,12 @@ textarea:focus {
   background-color: rgb(255 255 255 / var(--tw-bg-opacity));
 }
 
-.bg-notification {
-  background-color: var(--color-notification);
-}
-
 .bg-bcol {
   background-color: var(--color-border);
+}
+
+.bg-notification {
+  background-color: var(--color-notification);
 }
 
 .bg-sidebar-splash {
@@ -1253,17 +1239,19 @@ body, #app {
   box-shadow: inset 0px 0px 0px 1px rgb(0, 20, 80);
 }
 
-.🍂 {
-  --mainbg: var(--color-document);
-  --spoiler-bg: var(--color-document);
-  --maincolor: var(--color-text);
+.Markup {
+  --T-col: var(--color-text);
+  --T-bg: var(--color-document);
+  --T-border-col: var(--color-border);
+  --T-link-color: var(--color-link);
+  --T-link-hover-color: var(--color-link-hover);
 }
 
 .🍂 summary {
   background: var(--color-document) !important;
 }
 
-.🍂 pre {
+.Markup pre {
   display:block;
   overflow-x:auto;
   padding:3px 5px;
@@ -1273,7 +1261,7 @@ body, #app {
   box-shadow: inset 0px 0px 0px 1px rgb(0, 20, 80);
 }
 
-.🍂 img {
+.Markup img {
   cursor: pointer;
 }
 
@@ -1332,14 +1320,6 @@ body, #app {
     height: 0.5rem;
   }
 
-  .md\:grid-cols-\[4fr_2fr\] {
-    grid-template-columns: 4fr 2fr;
-  }
-
-  .md\:grid-cols-\[5fr_2fr\] {
-    grid-template-columns: 5fr 2fr;
-  }
-
   .md\:grid-cols-\[6fr_2fr\] {
     grid-template-columns: 6fr 2fr;
   }
@@ -1350,13 +1330,5 @@ body, #app {
 
   .md\:hover\:h-6:hover {
     height: 1.5rem;
-  }
-
-  .md\:hover\:cursor-pointer:hover {
-    cursor: pointer;
-  }
-
-  .md\:hover\:hover\:cursor-pointer:hover:hover {
-    cursor: pointer;
   }
 }

@@ -1,19 +1,21 @@
 <script setup lang="ts">
 import { useSharedStore } from "@/stores/shared";
-import { avatarUrl } from "@/lib/qcs/types/User";
 import { storeToRefs } from "pinia";
 import { nextTick, ref, watch } from "vue";
 import { useSettingsStore } from "@/stores/settings";
-import MarkupRender from "markup2/MarkupRender.vue";
-import { API_DOMAIN } from "@/lib/qcs/qcs";
+import MarkupRender from "./MarkupRender.vue";
+import { api, API_DOMAIN } from "@/lib/qcs/qcs";
 import { useIdentityStore } from "@/stores/identity";
-import type { Comment } from "@/lib/qcs/types/Comment";
-import { RequestParameter } from "@/lib/qcs/types/RequestParameter";
-import { RequestSearchParameter } from "@/lib/qcs/types/RequestSearchParameter";
+import type { User, Message } from "contentapi-ts-bindings/Views";
 import Scroller from "./Scroller.vue";
 import { rethreadMessages, sendRequest } from "../lib/helpers";
 import { render, last } from "../lib/helpers";
 import UserlistAvatar from "./UserlistAvatar.vue";
+import {
+  SearchRequest,
+  SearchRequests,
+} from "contentapi-ts-bindings/Search/SearchRequests";
+import { RequestType } from "contentapi-ts-bindings/Search/RequestType";
 
 const shared = useSharedStore();
 const settings = useSettingsStore();
@@ -57,12 +59,12 @@ async function sendMessage() {
     return;
   sendingMessage = true;
 
-  let msg: Partial<Comment> = {
+  let msg: Partial<Message> = {
     text: textboxContent.value.trim(),
     contentId: props.contentId,
     values: {
       m: markup.value,
-      a: identity.avatar,
+      a: identity.user?.avatar || "",
     },
   };
 
@@ -71,11 +73,7 @@ async function sendMessage() {
   }
 
   try {
-    await fetch(`https://${API_DOMAIN}/api/Write/message`, {
-      method: "POST",
-      headers: identity.headers,
-      body: JSON.stringify(msg),
-    });
+    await identity.session?.write("message", msg);
     textboxContent.value = "";
   } catch (e) {
     console.error(e);
@@ -98,7 +96,7 @@ async function editMessage() {
     return;
   }
 
-  let msg: Partial<Comment> = {
+  let msg: Partial<Message> = {
     id: editing.value,
     text: editContent.value.trim(),
     contentId: props.contentId,
@@ -113,11 +111,7 @@ async function editMessage() {
   }
 
   try {
-    await fetch(`https://${API_DOMAIN}/api/Write/message`, {
-      method: "POST",
-      headers: identity.headers,
-      body: JSON.stringify(msg),
-    });
+    await identity.session?.write("message", msg);
     stopEdit();
   } catch (e) {
     console.error(e);
@@ -126,10 +120,7 @@ async function editMessage() {
 
 async function deleteMessage(id: number) {
   try {
-    await fetch(`https://${API_DOMAIN}/api/Delete/message/${id}`, {
-      method: "POST",
-      headers: identity.plaintTextHeaders,
-    });
+    await identity.session?.delete("message", id);
   } catch (e) {
     console.error(e);
   }
@@ -179,22 +170,19 @@ function loadOlderMessages() {
     const contentId = props.contentId;
     loadingOlderMessages.value = true;
     const minId = commentChunks.value[props.contentId][0].comments[0].id;
-    const search = new RequestParameter(
-      { pid: props.contentId, maxId: minId },
-      [
-        new RequestSearchParameter(
-          "message",
-          "*",
-          "contentId = @pid and id < @maxId and !notdeleted()",
-          "id_desc",
-          commentPagination.value
-        ),
-        new RequestSearchParameter("user", "*", "id in @message.createUserId"),
-      ]
-    );
+    const search = new SearchRequests({ pid: props.contentId, maxId: minId }, [
+      new SearchRequest(
+        RequestType.message,
+        "*",
+        "contentId = @pid and id < @maxId and !notdeleted()",
+        "id_desc",
+        commentPagination.value
+      ),
+      new SearchRequest(RequestType.user, "*", "id in @message.createUserId"),
+    ]);
     sendRequest(search, (data) => {
-      data.user?.map((x) => shared.addUser(x));
-      data.message?.map((x) => shared.addComment(x));
+      data.user?.map((x: User) => shared.addUser(x));
+      data.message?.map((x: Message) => shared.addComment(x));
       shared.sortComments();
       shared.rebuildCommentChunks(contentId);
       shared.rebuildActivityChunks();
@@ -266,7 +254,7 @@ function toggleIgnoreUser(uid: number) {
   }
 }
 
-function canRethread(comment: Comment): boolean {
+function canRethread(comment: Message): boolean {
   return (
     comment.createUserId === identity.id &&
     rethreadStart.value <= comment.id &&
@@ -370,7 +358,7 @@ function resizeEditBox() {
           class="flex mx-1 my-2"
         >
           <img
-            :src="avatarUrl(c.avatar, avatarSize)"
+            :src="api.getFileURL(c.avatar, avatarSize)"
             class="w-auto h-6 md:h-12 mx-1 md:mr-2 md:rounded border border-bcol"
           />
           <div class="grow">
@@ -382,7 +370,8 @@ function resizeEditBox() {
                     class="text-textColor text-xs"
                     :to="`/user/${c.uid}`"
                   >
-                    ({{ c.username }})</router-link>:
+                    ({{ c.username }})</router-link
+                  >:
                 </span>
                 <router-link
                   class="text-textColor font-bold"

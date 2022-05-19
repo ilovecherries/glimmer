@@ -1,18 +1,20 @@
 <script setup lang="ts">
 import { BasicPageDisplaySearch } from "@/lib/qcs/qcs";
-import { avatarUrl } from "@/lib/qcs/types/User";
 import { useIdentityStore } from "@/stores/identity";
 import { useSettingsStore } from "@/stores/settings";
 import { useStateStore } from "@/stores/state";
 import { ContentState, useSharedStore } from "@/stores/shared";
-import { RoomStatus, useWebsocketStore } from "@/stores/websocket";
+import { useWebsocketStore } from "@/stores/websocket";
 import { storeToRefs } from "pinia";
 import { nextTick, ref, watch } from "vue";
 import ChatView from "../components/ChatView.vue";
-import type { RequestData } from "@/lib/qcs/types/RequestData";
 import { render, sendRequest } from "@/lib/helpers";
-import MarkupRender from "../../node_modules/markup2/MarkupRender.vue";
+import MarkupRender from "@/components/MarkupRender.vue";
 import { onBeforeRouteLeave, onBeforeRouteUpdate } from "vue-router";
+import { Status } from "contentapi-ts-bindings/Helpers";
+import { api } from "@/lib/qcs/qcs";
+import type { SearchResult } from "contentapi-ts-bindings/Search/SearchResult";
+import type { Content } from "contentapi-ts-bindings/Views";
 
 const identity = useIdentityStore();
 const state = useStateStore();
@@ -30,8 +32,6 @@ let showChat = ref(true);
 const props = defineProps({
   id: String,
 });
-
-let oldPage: undefined | number = undefined;
 
 function changeFavicon(link: string) {
   let $favicon: HTMLLinkElement | null =
@@ -60,7 +60,7 @@ const clearNotif = () => {
 const removeOldStatus = () => {
   if (props.id) {
     const id = parseInt(props.id);
-    websocket.setStatus(id, RoomStatus.notPresent);
+    websocket.setStatus(id, Status.not_present);
   }
 };
 
@@ -86,16 +86,16 @@ watch(
       }
       try {
         const search = BasicPageDisplaySearch(id);
-        const pageAction = (data: RequestData) => {
-          const page = data.content?.shift();
+        const pageAction = (data: SearchResult) => {
+          console.log("PAGE DATA:", data);
+          const page = (data.content as Content[])?.shift();
           if (page) {
             headerText.value = page.name;
             contents.value[id] = {
               data: page,
               state: ContentState.full,
             };
-            const users = data.user;
-            users?.map(shared.addUser);
+            data.users?.map(shared.addUser);
             const messages = data.message;
             if (messages) {
               messages.map(shared.addComment);
@@ -130,7 +130,7 @@ watch(
             if (titleNotifications.value) {
               document.title = lastComment.text;
               changeFavicon(
-                avatarUrl(
+                api.getFileURL(
                   lastComment.values?.a ||
                     users.value[lastComment.createUserId].avatar,
                   avatarSize.value
