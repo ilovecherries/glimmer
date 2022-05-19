@@ -156,3 +156,7 @@ body, #app {
 .Markup img {
   cursor: pointer;
 }
+
+.Markup video:hover, .Markup video:focus {
+  max-height: 50vh;
+}
