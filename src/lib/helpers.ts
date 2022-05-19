@@ -11,9 +11,7 @@ import type { SearchRequests } from "contentapi-ts-bindings/Search/SearchRequest
 import type { LiveEvent } from "contentapi-ts-bindings/Live/LiveEvent";
 import type { SearchResult } from "contentapi-ts-bindings/Search/SearchResult";
 
-export type RequestCallback = (
-  data: Record<string, Record<string, object>>
-) => void;
+export type RequestCallback = (data: Record<string, Array<object>>) => void;
 
 export const sendRequest = async (
   search: SearchRequests,

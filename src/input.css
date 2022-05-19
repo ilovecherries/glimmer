@@ -133,7 +133,7 @@ body, #app {
 
 .Markup {
   --T-col: var(--color-text);
-  --T-bg: var(--color-document);
+  --T-bg: 0;
   --T-border-col: var(--color-border);
   --T-link-color: var(--color-link);
   --T-link-hover-color: var(--color-link-hover);

@@ -14,7 +14,7 @@ import { onBeforeRouteLeave, onBeforeRouteUpdate } from "vue-router";
 import { Status } from "contentapi-ts-bindings/Helpers";
 import { api } from "@/lib/qcs/qcs";
 import type { SearchResult } from "contentapi-ts-bindings/Search/SearchResult";
-import type { Content } from "contentapi-ts-bindings/Views";
+import type { Content, Message, User } from "contentapi-ts-bindings/Views";
 
 const identity = useIdentityStore();
 const state = useStateStore();
@@ -86,7 +86,7 @@ watch(
       }
       try {
         const search = BasicPageDisplaySearch(id);
-        const pageAction = (data: SearchResult) => {
+        const pageAction = (data: Record<string, object[]>) => {
           console.log("PAGE DATA:", data);
           const page = (data.content as Content[])?.shift();
           if (page) {
@@ -95,10 +95,10 @@ watch(
               data: page,
               state: ContentState.full,
             };
-            data.users?.map(shared.addUser);
+            data.users?.map((x) => shared.addUser(x as User));
             const messages = data.message;
             if (messages) {
-              messages.map(shared.addComment);
+              messages.map((m) => shared.addComment(m as Message));
               shared.sortComments();
               shared.rebuildCommentChunks(id);
               shared.rebuildActivityChunks();

@@ -14,7 +14,11 @@ import {
   SearchRequest,
   SearchRequests,
 } from "contentapi-ts-bindings/Search/SearchRequests";
-import type { Content } from "contentapi-ts-bindings/Views";
+import type {
+  Content,
+  MessageAggregate,
+  User,
+} from "contentapi-ts-bindings/Views";
 import { RequestType } from "contentapi-ts-bindings/Search/RequestType";
 
 const identity = useIdentityStore();
@@ -72,26 +76,26 @@ watch(
       );
       console.log("🏄 Getting initial Message Aggregate to populate activity");
       sendRequest(search, (data) => {
-        console.log(data);
         const shared = useSharedStore();
-        data.content?.map((x: Content) =>
-          shared.addContent(x, ContentState.partial)
+        data.content?.map((x) =>
+          shared.addContent(x as Content, ContentState.partial)
         );
-        data.user?.map(shared.addUser);
+        data.user?.map((x) => shared.addUser(x as User));
         data.message_aggregate?.map((x) => {
-          const id = x.contentId;
+          const m = x as MessageAggregate;
+          const id = m.contentId;
           if (!shared.notifications[id])
             shared.notifications[id] = {
               contentId: id,
-              lastCommentDate: x.maxCreateDate,
-              count: x.count,
+              lastCommentDate: m.maxCreateDate,
+              count: m.count,
             };
           else {
             const lastDate = shared.notifications[id].lastCommentDate;
-            if (new Date(lastDate) < new Date(x.maxCreateDate)) {
-              shared.notifications[id].lastCommentDate = x.maxCreateDate;
+            if (new Date(lastDate) < new Date(m.maxCreateDate)) {
+              shared.notifications[id].lastCommentDate = m.maxCreateDate;
             }
-            shared.notifications[id].count += x.count;
+            shared.notifications[id].count += m.count;
           }
         });
         shared.messageInitialLoad = true;

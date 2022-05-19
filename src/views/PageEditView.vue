@@ -4,10 +4,10 @@ import { nextTick, ref, watch } from "@vue/runtime-dom";
 import { onBeforeRouteLeave } from "vue-router";
 import { render, sendRequest } from "@/lib/helpers";
 import MarkupRender from "@/components/MarkupRender.vue";
-import type { RequestData } from "@/lib/qcs/types/RequestData";
-import { MARKUPS } from "@/lib/qcs/types/Comment";
+import { MARKUPS } from "contentapi-ts-bindings/Views/Extras/MarkupLanguage";
 import { useStateStore } from "@/stores/state";
 import { storeToRefs } from "pinia";
+import type { Content } from "contentapi-ts-bindings/Views";
 
 const state = useStateStore();
 const { headerText } = storeToRefs(state);
@@ -28,8 +28,8 @@ watch(
     if (props.id) {
       const pid = parseInt(props.id);
       const search = BasicPageDisplaySearch(pid);
-      const pageAction = (data: RequestData) => {
-        const page = data.content?.shift();
+      const pageAction = (data: Record<string, object[]>) => {
+        const page = data.content?.shift() as Content;
         console.log(page);
         if (page) {
           headerText.value = `Editing ${page.name} (id: ${page.id})`;
@@ -91,10 +91,6 @@ watch(
   },
   { immediate: true }
 );
-
-function writeEdit() {
-
-}
 </script>
 
 <template>

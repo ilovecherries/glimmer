@@ -318,7 +318,7 @@ function resizeEditBox() {
       </div>
       <div class="shrink-0 w-8 h-full">
         <button
-          class="h-full w-full bg-accent-2"
+          class="h-full w-full bg-accent-2 text-accent-text"
           @click="rethreading = !rethreading"
         >
           ...
