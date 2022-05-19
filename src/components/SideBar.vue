@@ -5,7 +5,6 @@ import NotificationPane from "@/components/sidebar/NotificationPane.vue";
 import ProfilePage from "./sidebar/ProfilePage.vue";
 import { ref } from "@vue/runtime-dom";
 import SearchPane from "./sidebar/SearchPane.vue";
-import Splash from "@/assets/splash.gif";
 
 const state = useStateStore();
 const { openSidebar } = storeToRefs(state);
@@ -21,8 +20,8 @@ let sidebarView = ref(0);
       class="absolute bottom-0 right-0 w-[12em] h-auto opacity-25"
     /> -->
     <div
-      class="absolute bottom-0 right-0 w-[var(--splash-size)] h-[var(--splash-size)] opacity-[var(--splash-opacity)] bg-sidebar-splash bg-contain">
-    </div>
+      class="absolute bottom-0 right-0 w-[var(--splash-size)] h-[var(--splash-size)] opacity-[var(--splash-opacity)] bg-sidebar-splash bg-contain"
+    ></div>
     <div class="flex flex-col h-full sidebar-content relative">
       <NotificationPane v-show="sidebarView === 0" />
       <SearchPane v-show="sidebarView === 1" />

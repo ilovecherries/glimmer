@@ -4,7 +4,7 @@ import { useSharedStore } from "@/stores/shared";
 import { storeToRefs } from "pinia";
 import { last } from "@/lib/helpers";
 import { api } from "@/lib/qcs/qcs";
-import Scroller from "../Scroller.vue";
+import ScrollerView from "../ScrollerView.vue";
 
 const shared = useSharedStore();
 const settings = useSettingsStore();
@@ -15,7 +15,7 @@ const { avatarSize, activityDisplayUsername, ignoredUsers } =
 </script>
 
 <template>
-  <Scroller
+  <ScrollerView
     :watch-value="last(last(activityChunks)?.comments)?.id || undefined"
   >
     <div
@@ -57,5 +57,5 @@ const { avatarSize, activityDisplayUsername, ignoredUsers } =
         </span>
       </div>
     </div>
-  </Scroller>
+  </ScrollerView>
 </template>

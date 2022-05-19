@@ -7,7 +7,7 @@ import MarkupRender from "./MarkupRender.vue";
 import { api } from "@/lib/qcs/qcs";
 import { useIdentityStore } from "@/stores/identity";
 import type { User, Message } from "contentapi-ts-bindings/Views";
-import Scroller from "./Scroller.vue";
+import ScrollerView from "./ScrollerView.vue";
 import { rethreadMessages, sendRequest } from "../lib/helpers";
 import { render, last } from "../lib/helpers";
 import UserlistAvatar from "./UserlistAvatar.vue";
@@ -338,7 +338,7 @@ function resizeEditBox() {
       </div>
     </div>
     <div class="flex flex-col grow h-full">
-      <Scroller
+      <ScrollerView
         v-if="props.contentId"
         :watch-value="
           last(last(commentChunks[props.contentId || 0])?.comments)?.id
@@ -486,7 +486,7 @@ function resizeEditBox() {
             </div>
           </div>
         </div>
-      </Scroller>
+      </ScrollerView>
       <div class="grow h-full" v-else>No content id?</div>
       <div
         class="h-6 w-full shrink-0 bg-slate-800 text-white flex"
