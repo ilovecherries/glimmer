@@ -13,7 +13,6 @@
     "@vue/runtime-dom": "^3.2.33",
     "contentapi-ts-bindings": "github:ilovecherries/contentapi-ts-bindings",
     "highlight.js": "^11.5.1",
-    "markup2": "github:ilovecherries/markup2",
     "pinia": "^2.0.13",
     "pinia-plugin-persistedstate": "^1.5.1",
     "vue": "^3.2.33",
