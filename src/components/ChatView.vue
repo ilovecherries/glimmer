@@ -146,27 +146,15 @@ function upArrowEdit() {
 
 async function uploadImage() {
   try {
-    const formData = new FormData();
-    formData.append("file", imageData.value as Blob);
-    console.log(formData);
-    const res = await fetch(
-      `https://${import.meta.env.VITE_API_DOMAIN}/api/File`,
-      {
-        method: "post",
-        headers: identity.emptyHeaders,
-        body: formData,
-      }
-    );
-    const data: any = await res.json();
-    const hash = data.hash as string;
-    const url = `!https://${
-      import.meta.env.VITE_API_DOMAIN
-    }/api/File/raw/${hash}`;
-    imageFileUrl.value = url;
-    nextTick(() => {
-      imageFileUrlEl.value?.focus();
-      imageFileUrlEl.value?.select();
-    });
+    const hash = await identity.session?.uploadFile(imageData.value as Blob);
+    if (hash) {
+      const url = api.getFileURL(hash, 0);
+      imageFileUrl.value = url;
+      nextTick(() => {
+        imageFileUrlEl.value?.focus();
+        imageFileUrlEl.value?.select();
+      });
+    }
   } catch (e) {
     console.error(e);
   }

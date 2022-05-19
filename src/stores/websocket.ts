@@ -115,7 +115,6 @@ export const useWebsocketStore = defineStore({
               }
               break;
             }
-            case LiveEventType.badtoken:
             case LiveEventType.unexpected:
               break;
             default:
