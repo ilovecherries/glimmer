@@ -4,11 +4,11 @@ import { Scroller } from "./scroller";
 
 const props = defineProps({
   watchValue: Object,
+  view: String,
 });
 
 let scroller: Scroller | undefined;
-let animate = true;
-let oldValue: unknown = undefined;
+let oldView: string | undefined = undefined;
 
 let $outerScroll = ref<null | HTMLDivElement>(null);
 let $innerScroll = ref<null | HTMLDivElement>(null);
@@ -21,9 +21,11 @@ watch([$outerScroll, $innerScroll], () => {
 watch(
   () => props.watchValue,
   () => {
-    if (scroller && props.watchValue) {
+    if (scroller && oldView !== props.view) {
+      nextTick(scroller.print(false));
+      oldView = props.view;
+    } else if (scroller && props.watchValue) {
       nextTick(scroller.print(true));
-      animate = true;
     }
   },
   { deep: true }

@@ -343,6 +343,7 @@ function resizeEditBox() {
             last(last(commentChunks[props.contentId])?.comments)) ||
           undefined
         "
+        :view="props.contentId.toString()"
       >
         <div class="w-full">
           <div
