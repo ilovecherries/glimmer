@@ -35,6 +35,7 @@ const props = defineProps({
 let textboxContent = ref("");
 let editing = ref(0);
 let editContent = ref("");
+let lastMessageId = ref(-1);
 let $editBox = ref();
 let $chatBox = ref<null | HTMLDivElement>(null);
 
@@ -244,6 +245,19 @@ watch(
   { deep: true }
 );
 
+watch(
+  () => last(commentChunks.value[props.contentId || 0] || [])?.comments,
+  () => {
+    if (typeof props.contentId === "number") {
+      lastMessageId.value =
+        last(
+          last(commentChunks.value[props.contentId || 0] || [])?.comments || []
+        )?.id || -1;
+    }
+  },
+  { immediate: true, deep: true }
+);
+
 function toggleIgnoreUser(uid: number) {
   if (ignoredUsers.value.findIndex((x) => x === uid) === -1) {
     ignoredUsers.value.push(uid);
@@ -327,9 +341,7 @@ function resizeEditBox() {
       <Scroller
         v-if="props.contentId"
         :watch-value="
-          (props.contentId &&
-            last(last(commentChunks[props.contentId])?.comments)) ||
-          undefined
+          last(last(commentChunks[props.contentId || 0])?.comments)?.id
         "
         :view="props.contentId.toString()"
       >

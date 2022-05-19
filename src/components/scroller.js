@@ -107,7 +107,9 @@ export class Scroller {
     return scroll_height - outer_height - this.outer.scrollTop < 10; //outer_height*this.bottom_region
   }
   scroll_instant() {
-    this.outer.scrollTop = 9e9;
+    return () => {
+      this.outer.scrollTop = 9e9;
+    };
   }
   print(animate) {
     let at_bottom = this.at_bottom();
@@ -116,7 +118,7 @@ export class Scroller {
 
     return () => {
       if (at_bottom) {
-        this.scroll_instant();
+        this.scroll_instant()();
         if (animate) {
           let diff = this.scroll_height() - height1;
           this.start_animation(diff);

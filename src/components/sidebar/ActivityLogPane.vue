@@ -15,7 +15,9 @@ const { avatarSize, activityDisplayUsername, ignoredUsers } =
 </script>
 
 <template>
-  <Scroller :watch-value="last(last(activityChunks)?.comments) || undefined">
+  <Scroller
+    :watch-value="last(last(activityChunks)?.comments)?.id || undefined"
+  >
     <div
       v-for="a in activityChunks"
       :key="a.firstId"

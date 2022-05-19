@@ -3,12 +3,23 @@ import { nextTick, ref, watch } from "@vue/runtime-dom";
 import { Scroller } from "./scroller";
 
 const props = defineProps({
-  watchValue: Object,
+  watchValue: Number,
   view: String,
 });
 
 let scroller: Scroller | undefined;
 let oldView: string | undefined = undefined;
+interface CachedState {
+  /**
+   * $innerScroll.value.scrollTop
+   */
+  scroll: number;
+  /**
+   * watchValue
+   */
+  watchValue: number;
+}
+let cachedStates: Record<string, CachedState> = {};
 
 let $outerScroll = ref<null | HTMLDivElement>(null);
 let $innerScroll = ref<null | HTMLDivElement>(null);
@@ -18,17 +29,53 @@ watch([$outerScroll, $innerScroll], () => {
   }
 });
 
+const updateState = () => {
+  const view = props.view;
+  const scroll = $innerScroll.value?.scrollTop;
+  const watchValue = props.watchValue;
+  if (view !== undefined && scroll !== undefined && watchValue !== undefined) {
+    cachedStates[view] = {
+      scroll,
+      watchValue,
+    };
+  }
+};
+
 watch(
   () => props.watchValue,
   () => {
     if (scroller && oldView !== props.view) {
-      nextTick(scroller.print(false));
+      nextTick(scroller.scroll_instant());
+      // if (props.view !== undefined && cachedStates[props.view]) {
+      //   console.log("owo");
+      //   nextTick(scroller.scroll_instant());
+      //   // nextTick(() => {
+      //   //   if ($innerScroll.value) {
+      //   //     scroller?.scroll_instant();
+      //   //   }
+      //   // });
+      //   // this would be ideal to do, but the problem with this is that it
+      //   // relies on updating the state a lot... let me see if this WORKS
+      //   // first and then experiment with the scroll event
+      //   // if (props.watchValue !== state.watchValue) {
+      //   //   $innerScroll.value.scrollTop = $innerScroll.value.scrollHeight;
+      //   // } else {
+      //   //   $innerScroll.value.scrollTop = state.scroll;
+      //   // }
+      // } else {
+      //   nextTick(() => {
+      //     updateState();
+      //   });
+      // }
       oldView = props.view;
     } else if (scroller && props.watchValue) {
       nextTick(scroller.print(true));
+      // nextTick(() => {
+      //   scroller?.print(true)();
+      //   updateState();
+      // });
     }
-  },
-  { deep: true }
+  }
 );
 </script>
 
