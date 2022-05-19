@@ -12,6 +12,7 @@ import { defineStore } from "pinia";
 import { ContentState, useSharedStore } from "./shared";
 import type { UserlistResult } from "contentapi-ts-bindings/Live/UserlistResult";
 import type { SearchRequests } from "contentapi-ts-bindings/Search/SearchRequests";
+import { useIdentityStore } from "./identity";
 
 export type WebsocketStoreState = {
   socket?: ContentAPI_Socket;
@@ -39,6 +40,12 @@ export const useWebsocketStore = defineStore({
       const shared = useSharedStore();
 
       this.setStatus(0);
+
+      this.socket.badtoken = () => {
+        const identity = useIdentityStore();
+        identity.logout();
+        this.stop();
+      };
 
       this.socket.callback = (res) => {
         try {
