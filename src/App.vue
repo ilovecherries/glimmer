@@ -171,7 +171,7 @@ watch(
 </template>
 
 <style>
-@import "./assets/output.css";
+@import "./input.css";
 @import "./code.css";
 header {
   background: gray;
