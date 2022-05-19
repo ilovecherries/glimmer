@@ -15,6 +15,8 @@ function signIn(username: string, password: string) {
   login(username, password);
 }
 
+const domain = import.meta.env.VITE_API_DOMAIN;
+
 let formUsername = "",
   formPassword = "";
 </script>
@@ -29,21 +31,40 @@ let formUsername = "",
       />
       <span>Logged in as </span><b>{{ user?.username || "Unknown" }}</b> (uid:
       {{ user?.id }})
+      <div>Server: {{ domain }}</div>
       <div>Super?: {{ user?.super }}</div>
       <div>Create date: {{ user?.createDate }}</div>
       <button class="block" @click="logout()">Log out</button>
       <div><span>Nickname: </span><input type="text" v-model="nickname" /></div>
     </div>
     <div v-else>
-      <div>
-        <label for="username">Username:</label>
-        <input v-model="formUsername" type="text" name="username" />
-      </div>
-      <div>
-        <label for="password">Password:</label>
-        <input v-model="formPassword" type="password" name="password" />
-      </div>
-      <button @click="signIn(formUsername, formPassword)">Log in</button>
+      <h2 class="text-2xl">{{ domain }}</h2>
+      <form
+        class="flex flex-col gap-2 max-w-min"
+        @submit.prevent="signIn(formUsername, formPassword)"
+      >
+        <div>
+          <label class="block text-lg" for="login-username">Username:</label>
+          <input
+            v-model="formUsername"
+            id="login-username"
+            type="text"
+            name="username"
+            required
+          />
+        </div>
+        <div>
+          <label for="login-password" class="block text-lg"> Password: </label>
+          <input
+            v-model="formPassword"
+            id="login-password"
+            type="password"
+            name="password"
+            required
+          />
+        </div>
+        <button type="submit">Log in</button>
+      </form>
     </div>
     <hr class="my-4" />
     <div>

@@ -29,3 +29,10 @@ const props = defineProps({
     <slot></slot>
   </div>
 </template>
+
+<style scoped>
+img {
+  image-rendering: -webkit-optimize-contrast;
+  /* image-rendering: crisp-edges; */
+}
+</style>

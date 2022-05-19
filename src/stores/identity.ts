@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { api } from "@/lib/qcs/qcs";
 import { ContentAPI_Session } from "contentapi-ts-bindings/Helpers";
 import type { User } from "contentapi-ts-bindings/Views/User";
+import { AxiosError } from "axios";
 
 interface IdentityStoreState {
   token: string;
@@ -45,8 +46,16 @@ export const useIdentityStore = defineStore({
       if (token) this.token = token;
       this.session = new ContentAPI_Session(api, this.token);
       try {
-        const user = (await this.session?.getUserInfo()) || undefined;
-        if (!user) this.logout();
+        let user: User | undefined;
+        try {
+          user = (await this.session?.getUserInfo()) || undefined;
+        } catch (e) {
+          if (e instanceof AxiosError) {
+            this.logout();
+            return;
+          }
+        }
+        if (!user) return;
         this.user = user;
         this.username = user.username;
         this.avatar = user.avatar;

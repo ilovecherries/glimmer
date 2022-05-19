@@ -8,8 +8,8 @@ const Markup_Render_Dom = require("../../markup2/render");
 import { useStateStore } from "@/stores/state";
 import type { SearchRequests } from "contentapi-ts-bindings/Search/SearchRequests";
 import type { LiveEvent } from "contentapi-ts-bindings/Live/LiveEvent";
-import type { SearchResult } from "contentapi-ts-bindings/Search/SearchResult";
 import type { LiveData } from "contentapi-ts-bindings/Live/LiveData";
+import { api } from "./qcs/qcs";
 
 export const sendRequest = async <T = Record<string, Array<object>>>(
   search: SearchRequests,
@@ -23,18 +23,8 @@ export const sendRequest = async <T = Record<string, Array<object>>>(
       callback((a.data as unknown as LiveData<T>).objects);
     });
   } else {
-    const pageReq = await fetch(
-      `https://${import.meta.env.VITE_API_DOMAIN}/api/Request`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(search),
-      }
-    );
-    const pageJson: SearchResult<T> = await pageReq.json();
-    callback(pageJson.objects);
+    const data = await api.request<T>(search);
+    callback(data.objects);
   }
 };
 
@@ -50,7 +40,7 @@ export const rethreadMessages = async (
       message: `Rethreaded messages to ${contentId}`,
     };
     const pageReq = await fetch(
-      `https://${API_DOMAIN}/api/Shortcuts/rethread`,
+      `https://${import.meta.env.VITE_API_DOMAIN}/api/Shortcuts/rethread`,
       {
         method: "POST",
         headers: identity.headers,
@@ -113,7 +103,7 @@ Renderer.create["image"] = ({ url, alt, width, height }): HTMLImageElement => {
 };
 
 export function last<T>(arr: Array<T> | undefined): T | undefined {
-  if (!arr) return undefined;
+  if (!arr || arr.length === 0) return undefined;
   return arr[arr.length - 1];
 }
 

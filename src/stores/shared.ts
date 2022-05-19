@@ -116,7 +116,6 @@ export const useSharedStore = defineStore({
     },
     updateCommentChunks(comment: Message) {
       const roomId = comment.contentId;
-      console.log(this.users, comment);
       const user = this.users[comment.createUserId];
       const username = user.username;
       const nickname = comment.values.n;
@@ -290,7 +289,6 @@ export const useSharedStore = defineStore({
       }
     },
     addUser(user: User) {
-      console.log("PLEASE");
       const identity = useIdentityStore();
       if (identity.user?.id === user.id) {
         identity.user = user;

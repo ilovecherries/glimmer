@@ -6,7 +6,7 @@
   [data-theme="sbs"] {
       --color-document: rgb(253, 253, 253);
       --color-text: #000;
-      --color-item-hover: #adadad;
+      --color-item-hover: #dadada;
       --color-accent: #bdbfbd;
       --color-text-accent: #efefef;
       --color-accent-2: #393939;
@@ -60,7 +60,7 @@
   }
 
   .msg-icon-container > button {
-    @apply bg-accent border-bcol px-2 py-0.5 border hover:bg-item-hover
+    @apply bg-document border-bcol px-2 py-0.5 border hover:bg-item-hover
   }
 
   .sidebar-button-container {

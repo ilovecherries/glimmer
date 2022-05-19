@@ -72,10 +72,13 @@ async function sendMessage() {
     msg.values.n = nickname.value;
   }
 
+  const oldValue = textboxContent.value;
+  textboxContent.value = "";
+
   try {
     await identity.session?.write("message", msg);
-    textboxContent.value = "";
   } catch (e) {
+    textboxContent.value = oldValue;
     console.error(e);
   }
 
