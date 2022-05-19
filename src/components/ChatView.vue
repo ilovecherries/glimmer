@@ -181,8 +181,8 @@ function loadOlderMessages() {
       new SearchRequest(RequestType.user, "*", "id in @message.createUserId"),
     ]);
     sendRequest(search, (data) => {
-      data.user?.map((x: User) => shared.addUser(x));
-      data.message?.map((x: Message) => shared.addComment(x));
+      data.user?.map((x) => shared.addUser(x as User));
+      data.message?.map((x) => shared.addComment(x as Message));
       shared.sortComments();
       shared.rebuildCommentChunks(contentId);
       shared.rebuildActivityChunks();
@@ -291,7 +291,7 @@ function resizeEditBox() {
       class="w-full h-6 text-sm bg-slate-800 text-textColor"
       v-if="showContentName"
     >
-      {{ contents[props.contentId]?.name }}
+      {{ props.contentId ? contents[props.contentId]?.data.name : "" }}
     </div>
     <div class="h-8 md:h-10 w-full bg-accent flex" v-if="showUserlist">
       <div class="grow">
@@ -414,7 +414,11 @@ function resizeEditBox() {
                 />
               </div>
               <div
-                v-if="m.createUserId === identity.id && editing !== m.id"
+                v-if="
+                  (m.createUserId === identity.user?.id ||
+                    identity.user?.super) &&
+                  editing !== m.id
+                "
                 class="msg-icon-container"
               >
                 <button
