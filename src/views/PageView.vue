@@ -86,9 +86,8 @@ watch(
         return;
       }
       try {
-        const search = getPageRequest(id);
+        const search = getPageRequest(id, { messagePage: 0 });
         const pageAction = (data: GetPageResult) => {
-          console.log("PAGE DATA:", data);
           const page = data.content?.shift();
           if (page) {
             contents.value[id] = {
