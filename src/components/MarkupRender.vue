@@ -50,7 +50,7 @@ watch(
 
 <style>
 @import "../../markup2/markup.css";
-.Markup img[data-state="loaded"] {
+.Markup img {
   height: var(--T-embed-height);
 }
 </style>

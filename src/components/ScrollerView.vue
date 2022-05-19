@@ -45,7 +45,8 @@ let oldWatchValue: number | undefined;
 watch(
   () => props.watchValue,
   () => {
-    if (scroller && oldView !== props.view) {
+    console.log("scroll", props.watchValue, props.view);
+    if (scroller && oldView !== props.view && props.watchValue) {
       nextTick(scroller.scroll_instant());
       oldView = props.view;
     } else if (scroller && props.watchValue) {
