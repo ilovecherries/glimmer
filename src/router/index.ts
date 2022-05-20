@@ -2,8 +2,9 @@ import { createRouter, createWebHashHistory } from "vue-router";
 const PageEditView = () => import("@/views/PageEditView.vue");
 const HomeView = () => import("../views/HomeView.vue");
 const PageView = () => import("../views/PageView.vue");
+const UserView = () => import("../views/UserView.vue");
 
-const router = createRouter({
+export const router = createRouter({
   history: createWebHashHistory(),
   routes: [
     {
@@ -23,6 +24,12 @@ const router = createRouter({
       component: PageEditView,
       props: true,
     },
+    {
+      path: "/user/:userId",
+      name: "user",
+      component: UserView,
+      props: true,
+    }
   ],
 });
 

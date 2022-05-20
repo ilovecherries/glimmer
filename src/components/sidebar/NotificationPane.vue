@@ -52,8 +52,6 @@ watch(
           class="relative"
         >
           <UserlistAvatar :uid="u">
-            <div>{{ users[u].username }}</div>
-            <hr />
             <div>Currently Browsing</div>
             <div
               v-for="room in Object.keys(userlists).filter(

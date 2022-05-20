@@ -319,7 +319,6 @@ function resizeEditBox() {
             class="relative h-full"
           >
             <UserlistAvatar :uid="u">
-              <div>{{ users[u].username }}</div>
               <div>{{ users[u].createDate }}</div>
               <div @click="toggleIgnoreUser(u)" class="hover:cursor-pointer">
                 Ignore User

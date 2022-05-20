@@ -27,6 +27,7 @@ let $innerScroll = ref<null | HTMLDivElement>(null);
 watch([$outerScroll, $innerScroll], () => {
   if ($outerScroll.value && $innerScroll.value) {
     scroller = new Scroller($outerScroll.value, $innerScroll.value);
+    nextTick(scroller.scroll_instant());
   }
 });
 let oldWatchValue: number | undefined;

@@ -26,6 +26,10 @@ const props = defineProps({
   <div
     class="hidden peer-hover:block hover:block absolute b-10 bg-document text-textColor z-10 min-w-max p-2 border border-bcol rounded-b"
   >
+    <router-link :to="`/user/${props.uid || 0}`">
+      {{ users[props.uid || 0].username }}
+    </router-link>
+    <hr />
     <slot></slot>
   </div>
 </template>
