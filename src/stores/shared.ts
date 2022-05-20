@@ -70,6 +70,7 @@ export type NotificationContainer = {
 export type SharedStoreState = {
   contents: ContentContainer;
   comments: Array<Message>;
+  mostRecentComment: number;
   activityChunks: Array<ActivityChunk>;
   commentChunks: CommentChunkContainer;
   users: UserContainer;
@@ -85,6 +86,7 @@ export const useSharedStore = defineStore({
     return {
       contents: {},
       comments: [],
+      mostRecentComment: 0,
       activityChunks: [],
       commentChunks: {},
       users: {},
@@ -183,7 +185,7 @@ export const useSharedStore = defineStore({
           p.push(c);
         return p;
       },
-      []);
+        []);
       this.comments = this.comments.sort((a, b) => {
         return a.id - b.id;
       });
@@ -215,6 +217,7 @@ export const useSharedStore = defineStore({
           contentId: comment.contentId,
         };
       }
+      this.mostRecentComment = comment.id;
     },
     deleteFromChunks(chunks: Array<Chunk>, commentId: number) {
       for (let i = 0; i < chunks.length; i++) {

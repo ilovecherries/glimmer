@@ -2,22 +2,20 @@
 import { useSettingsStore } from "@/stores/settings";
 import { useSharedStore } from "@/stores/shared";
 import { storeToRefs } from "pinia";
-import { last } from "@/lib/helpers";
 import { api } from "@/lib/qcs/qcs";
 import ScrollerView from "../ScrollerView.vue";
 
 const shared = useSharedStore();
 const settings = useSettingsStore();
 
-const { contents, activityChunks, users } = storeToRefs(shared);
+const { mostRecentComment, contents, activityChunks, users } =
+  storeToRefs(shared);
 const { avatarSize, activityDisplayUsername, ignoredUsers } =
   storeToRefs(settings);
 </script>
 
 <template>
-  <ScrollerView
-    :watch-value="last(last(activityChunks)?.comments)?.id || undefined"
-  >
+  <ScrollerView :watch-value="mostRecentComment">
     <div
       v-for="a in activityChunks"
       :key="a.firstId"

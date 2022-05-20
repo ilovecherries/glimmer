@@ -340,9 +340,7 @@ function resizeEditBox() {
     <div class="flex flex-col grow h-full">
       <ScrollerView
         v-if="props.contentId"
-        :watch-value="
-          last(last(commentChunks[props.contentId || 0])?.comments)?.id
-        "
+        :watch-value="last(last(commentChunks[props.contentId || 0])?.comments)"
         :view="props.contentId.toString()"
       >
         <div class="w-full">

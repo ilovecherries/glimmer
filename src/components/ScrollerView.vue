@@ -3,8 +3,8 @@ import { nextTick, ref, watch } from "@vue/runtime-dom";
 import { Scroller } from "./scroller";
 
 const props = defineProps({
-  watchValue: Number,
-  view: String,
+  watchValue: Object,
+  view: Object,
 });
 
 let scroller: Scroller | undefined;
@@ -43,7 +43,7 @@ let oldWatchValue: number | undefined;
 // };
 
 watch(
-  () => props.watchValue,
+  () => [props.watchValue, props.view],
   () => {
     console.log("scroll", props.watchValue, props.view);
     if (scroller && oldView !== props.view && props.watchValue) {
@@ -52,7 +52,8 @@ watch(
     } else if (scroller && props.watchValue) {
       nextTick(scroller.print(true));
     }
-  }
+  },
+  { deep: true }
 );
 </script>
 
