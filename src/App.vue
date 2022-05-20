@@ -7,7 +7,7 @@ import { watch } from "vue";
 import { useStateStore } from "./stores/state";
 import { storeToRefs } from "pinia";
 import { ContentState, useSharedStore } from "./stores/shared";
-import { GetSearchBackDate } from "./lib/qcs/qcs";
+import { GetSearchBackDate } from "@/lib/qcs";
 import { sendRequest } from "./lib/helpers";
 import { useSettingsStore } from "./stores/settings";
 import {

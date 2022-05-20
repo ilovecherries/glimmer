@@ -9,7 +9,7 @@ import { useStateStore } from "@/stores/state";
 import type { SearchRequests } from "contentapi-ts-bindings/Search/SearchRequests";
 import type { LiveEvent } from "contentapi-ts-bindings/Live/LiveEvent";
 import type { LiveData } from "contentapi-ts-bindings/Live/LiveData";
-import { api } from "./qcs/qcs";
+import { api } from "@/lib/qcs";
 
 export const sendRequest = async <T = Record<string, Array<object>>>(
   search: SearchRequests,

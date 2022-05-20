@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { api } from "@/lib/qcs/qcs";
+import { api } from "@/lib/qcs";
 import { ContentAPI_Session } from "contentapi-ts-bindings/Helpers";
 import type { User } from "contentapi-ts-bindings/Views/User";
 import { AxiosError } from "axios";

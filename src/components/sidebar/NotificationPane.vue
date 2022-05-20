@@ -6,7 +6,7 @@ import type { Notification } from "../../stores/shared";
 import ActivityLogPane from "./ActivityLogPane.vue";
 import defaultPageIcon from "@/assets/SB-thread.png";
 import UserlistAvatar from "../UserlistAvatar.vue";
-import { api } from "@/lib/qcs/qcs";
+import { api } from "@/lib/qcs";
 
 const shared = useSharedStore();
 

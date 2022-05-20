@@ -5,7 +5,7 @@ import { useSettingsStore } from "@/stores/settings";
 import { storeToRefs } from "pinia";
 import ThreadImage from "@/assets/SB-thread.png";
 import type { User, Content } from "contentapi-ts-bindings/Views";
-import { api } from "@/lib/qcs/qcs";
+import { api } from "@/lib/qcs";
 import {
   SearchRequest,
   SearchRequests,

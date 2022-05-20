@@ -15,7 +15,7 @@ import {
   Status,
   type GetPageResult,
 } from "contentapi-ts-bindings/Helpers";
-import { api } from "@/lib/qcs/qcs";
+import { api } from "@/lib/qcs";
 
 const identity = useIdentityStore();
 const state = useStateStore();

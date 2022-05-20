@@ -2,7 +2,7 @@
 import { useSettingsStore } from "@/stores/settings";
 import { storeToRefs } from "pinia";
 import { useSharedStore } from "@/stores/shared";
-import { api } from "@/lib/qcs/qcs";
+import { api } from "@/lib/qcs";
 
 const settings = useSettingsStore();
 const shared = useSharedStore();

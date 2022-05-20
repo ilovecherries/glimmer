@@ -5,10 +5,11 @@ import { Scroller } from "./scroller";
 const props = defineProps({
   watchValue: Object,
   view: Object,
+  animate: Boolean,
 });
 
 let scroller: Scroller | undefined;
-let oldView: string | undefined = undefined;
+let oldView: object | undefined = undefined;
 // interface CachedState {
 //   /**
 //    * $innerScroll.value.scrollTop
@@ -50,7 +51,7 @@ watch(
       nextTick(scroller.scroll_instant());
       oldView = props.view;
     } else if (scroller && props.watchValue) {
-      nextTick(scroller.print(true));
+      nextTick(scroller.print(props.animate || false));
     }
   },
   { deep: true }

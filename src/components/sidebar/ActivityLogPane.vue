@@ -2,7 +2,7 @@
 import { useSettingsStore } from "@/stores/settings";
 import { useSharedStore } from "@/stores/shared";
 import { storeToRefs } from "pinia";
-import { api } from "@/lib/qcs/qcs";
+import { api } from "@/lib/qcs";
 import ScrollerView from "../ScrollerView.vue";
 
 const shared = useSharedStore();

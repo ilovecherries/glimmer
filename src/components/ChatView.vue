@@ -4,7 +4,7 @@ import { storeToRefs } from "pinia";
 import { nextTick, ref, watch } from "vue";
 import { useSettingsStore } from "@/stores/settings";
 import MarkupRender from "./MarkupRender.vue";
-import { api } from "@/lib/qcs/qcs";
+import { api } from "@/lib/qcs";
 import { useIdentityStore } from "@/stores/identity";
 import type { User, Message } from "contentapi-ts-bindings/Views";
 import ScrollerView from "./ScrollerView.vue";
@@ -341,7 +341,8 @@ function resizeEditBox() {
       <ScrollerView
         v-if="props.contentId"
         :watch-value="last(last(commentChunks[props.contentId || 0])?.comments)"
-        :view="props.contentId.toString()"
+        :view="props.contentId"
+        :animate="true"
       >
         <div class="w-full">
           <div

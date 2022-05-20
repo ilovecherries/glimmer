@@ -2,7 +2,7 @@
 import { useIdentityStore } from "@/stores/identity";
 import { storeToRefs } from "pinia";
 import { useSettingsStore, THEMES } from "@/stores/settings";
-import { api } from "@/lib/qcs/qcs";
+import { api } from "@/lib/qcs";
 
 const identity = useIdentityStore();
 const settings = useSettingsStore();
