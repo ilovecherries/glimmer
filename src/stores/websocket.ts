@@ -13,6 +13,7 @@ import { ContentState, useSharedStore } from "./shared";
 import type { UserlistResult } from "contentapi-ts-bindings/Live/UserlistResult";
 import type { SearchRequests } from "contentapi-ts-bindings/Search/SearchRequests";
 import { useIdentityStore } from "./identity";
+import { api } from "@/lib/qcs";
 
 export type WebsocketStoreState = {
   socket?: ContentAPI_Socket;
@@ -34,6 +35,8 @@ export const useWebsocketStore = defineStore({
       if (this.socket) {
         return;
       }
+      console.log(api, api.wsPath, api.path);
+      console.log(session)
       this.socket = session.createSocket();
       console.log("👑 WebSocket Started");
 

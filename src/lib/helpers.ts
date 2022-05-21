@@ -3,7 +3,7 @@ import { useWebsocketStore } from "@/stores/websocket";
 import { useIdentityStore } from "../stores/identity";
 import type { Message } from "contentapi-ts-bindings/Views";
 import HighlightJS from "highlight.js";
-import Markup_Render_Dom from "@/../markup2/render";
+import Markup_Render_Dom from "markup2/render";
 import { useStateStore } from "@/stores/state";
 import type { SearchRequests } from "contentapi-ts-bindings/Search/SearchRequests";
 import type { LiveEvent } from "contentapi-ts-bindings/Live/LiveEvent";

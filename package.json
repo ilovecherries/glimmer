@@ -16,7 +16,8 @@
     "pinia": "^2.0.13",
     "pinia-plugin-persistedstate": "^1.5.1",
     "vue": "^3.2.33",
-    "vue-router": "^4.0.14"
+    "vue-router": "^4.0.14",
+    "markup2": "github:12Me21/markup2#49511854dcd680b7f423dd34a0a0c236586b575f"
   },
   "devDependencies": {
     "@types/jsdom": "^16.2.14",
