@@ -49,17 +49,21 @@ watch(
   } else {
     const search = getUserPageRequest(uid);
     await sendRequest<GetUserPageResult>(search, (data) => {
-      const page = data.content?.shift();
-      if (page) {
-        shared.addContent(page, ContentState.full);
-        data.user?.map(shared.addUser);
-        headerText.value = users.value[uid].username;
-        contentId.value = page.id;
+      const user = data.user?.shift();
+      if (user) {
+        shared.addUser(user);
         userId.value = uid;
+        headerText.value = users.value[uid].username;
+        const page = data.content?.shift();
+        if (page) {
+          shared.addContent(page, ContentState.full);
+          contentId.value = page.id;
+        } else {
+          contentId.value = -1;
+        }
       } else {
         contentId.value = -1;
-        userId.value = -1;
-        throw new Error("Page wasn't returned from the API.");
+        userId.value = -1
       }
     })
   }
@@ -91,7 +95,7 @@ watch(
           </span>
         </div>
       </div>
-      <div class="min-h-max p-4">
+      <div class="min-h-max p-4" v-if="contentId !== -1">
         <MarkupRender
           :content="contents[contentId]?.data?.text || '...'"
           :lang="contents[contentId]?.data?.values?.markupLang"

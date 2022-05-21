@@ -5,11 +5,19 @@ import NotificationPane from "@/components/sidebar/NotificationPane.vue";
 import ProfilePage from "./sidebar/ProfilePage.vue";
 import { ref } from "@vue/runtime-dom";
 import SearchPane from "./sidebar/SearchPane.vue";
+import { useIdentityStore } from "@/stores/identity";
 
 const state = useStateStore();
+const identity = useIdentityStore();
 const { openSidebar } = storeToRefs(state);
 
-let sidebarView = ref(0);
+const NOTIFICATION_PANE = 0;
+const SEARCH_PANE = 1;
+const PROFILE_PANE = 2;
+
+let sidebarView = ref(identity.session ?
+  NOTIFICATION_PANE :
+  PROFILE_PANE);
 </script>
 
 <template>

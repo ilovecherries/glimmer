@@ -17,8 +17,11 @@ function signIn(username: string, password: string) {
 
 const domain = import.meta.env.VITE_API_DOMAIN;
 
-let formUsername = "",
-  formPassword = "";
+let loginUsername = "",
+  formPassword = "",
+  registerUsername = "",
+  registerEmail = "",
+  registerPassword = "";
 </script>
 
 <template>
@@ -37,16 +40,15 @@ let formUsername = "",
       <button class="block" @click="logout()">Log out</button>
       <div><span>Nickname: </span><input type="text" v-model="nickname" /></div>
     </div>
-    <div v-else>
+    <div v-else class="p-2">
       <h2 class="text-2xl">{{ domain }}</h2>
-      <form
-        class="flex flex-col gap-2 max-w-min"
-        @submit.prevent="signIn(formUsername, formPassword)"
-      >
+      <hr>
+      <h3 class="text-xl">login</h3>
+      <form @submit.prevent="signIn(loginUsername, formPassword)">
         <div>
           <label class="block text-lg" for="login-username">Username:</label>
           <input
-            v-model="formUsername"
+            v-model="loginUsername"
             id="login-username"
             type="text"
             name="username"
@@ -65,6 +67,40 @@ let formUsername = "",
         </div>
         <button type="submit">Log in</button>
       </form>
+      <h3 class="text-xl">register</h3>
+      <form @submit.prevent="signIn(registerUsername, registerPassword)">
+        <div>
+          <label class="block text-lg" for="register-username">Username:</label>
+          <input
+            v-model="registerUsername"
+            id="register-username"
+            type="text"
+            name="username"
+            required
+          />
+        </div>
+        <div>
+          <label class="block text-lg" for="register-email">Email:</label>
+          <input
+            v-model="registerEmail"
+            id="register-email"
+            type="text"
+            name="username"
+            required
+          />
+        </div>
+        <div>
+          <label for="register-password" class="block text-lg"> Password: </label>
+          <input
+            v-model="registerPassword"
+            id="login-password"
+            type="password"
+            name="password"
+            required
+          />
+        </div>
+        <button type="submit">Register</button>
+      </form>
     </div>
     <hr class="my-4" />
     <div>
@@ -80,3 +116,9 @@ let formUsername = "",
     </div>
   </div>
 </template>
+
+<style scoped>
+  h3 {
+    margin-top: 1em;
+  }
+</style>
