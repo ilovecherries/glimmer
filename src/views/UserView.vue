@@ -29,16 +29,17 @@ watch(
     return;
   }
   const uid = parseInt(newId as string);
+  console.log(uid);
   const cid = parseInt(Object.keys(contents.value).find(
     x => {
       const data = contents.value[parseInt(x)].data;
       return data.createUserId === uid &&
         data.contentType === InternalContentType.userpage;
     }
-  ) || "-1");
+  ) || "0");
   if (
-    users.value[uid] &&
-    contents.value[cid] && 
+    users.value[uid] !== undefined &&
+    contents.value[cid] !== undefined && 
     contents.value[cid].state === ContentState.full
   ) {
     contentId.value = cid;
@@ -50,13 +51,10 @@ watch(
     await sendRequest<GetUserPageResult>(search, (data) => {
       const page = data.content?.shift();
       if (page) {
-        contents.value[cid] = {
-          data: page,
-          state: ContentState.full,
-        };
+        shared.addContent(page, ContentState.full);
         data.user?.map(shared.addUser);
         headerText.value = users.value[uid].username;
-        contentId.value = cid;
+        contentId.value = page.id;
         userId.value = uid;
       } else {
         contentId.value = -1;
