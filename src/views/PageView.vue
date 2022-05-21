@@ -62,9 +62,8 @@ const clearNotif = () => {
 };
 
 const removeOldStatus = () => {
-  if (props.id) {
-    const id = parseInt(props.id);
-    websocket.setStatus(id, Status.not_present);
+  if (contentId.value !== PAGE_NOT_FOUND) {
+    websocket.setStatus(contentId.value, Status.not_present);
   }
 };
 
