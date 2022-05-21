@@ -9,7 +9,7 @@ import { nextTick, ref, watch } from "vue";
 import ChatView from "../components/ChatView.vue";
 import { render, sendRequest } from "@/lib/helpers";
 import MarkupRender from "@/components/MarkupRender.vue";
-import { onBeforeRouteLeave, onBeforeRouteUpdate } from "vue-router";
+import { onBeforeRouteLeave, onBeforeRouteUpdate, routeLocationKey, useRoute } from "vue-router";
 import {
   getPageRequest,
   Status,
@@ -22,6 +22,7 @@ const state = useStateStore();
 const settings = useSettingsStore();
 const shared = useSharedStore();
 const websocket = useWebsocketStore();
+const route = useRoute();
 
 const { headerText } = storeToRefs(state);
 
@@ -29,6 +30,8 @@ const { avatarSize, titleNotifications } = storeToRefs(settings);
 const { commentChunks, contents, users, notifications } = storeToRefs(shared);
 const { loggedIn } = storeToRefs(identity);
 let showChat = ref(true);
+const PAGE_NOT_FOUND = -1;
+let contentId = ref(PAGE_NOT_FOUND);
 
 const props = defineProps({
   id: String,
@@ -69,19 +72,20 @@ onBeforeRouteLeave(removeOldStatus);
 onBeforeRouteUpdate(removeOldStatus);
 
 watch(
-  () => props.id,
-  async () => {
-    if (props.id) {
-      const id = parseInt(props.id);
-      nextTick(() => {
-        websocket.setStatus(id);
-      });
+  () => route.params.id,
+  async (param) => {
+    if (param !== undefined) {
+      const id = parseInt(param as string);
       if (
         contents.value[id] &&
         contents.value[id].state === ContentState.full
       ) {
         const page = contents.value[id].data;
+        contentId.value = id;
         headerText.value = page.name;
+        nextTick(() => {
+          websocket.setStatus(id);
+        });
         clearNotif();
         return;
       }
@@ -90,10 +94,7 @@ watch(
         const pageAction = (data: GetPageResult) => {
           const page = data.content?.shift();
           if (page) {
-            contents.value[id] = {
-              data: page,
-              state: ContentState.full,
-            };
+            shared.addContent(page, ContentState.full);
             headerText.value = page.name;
             data.user?.map(shared.addUser);
             const messages = data.message;
@@ -103,13 +104,19 @@ watch(
               shared.rebuildCommentChunks(id);
               shared.rebuildActivityChunks();
             }
+            nextTick(() => {
+              websocket.setStatus(id);
+            });
+            contentId.value = page.id;
             clearNotif();
           } else {
+            contentId.value = PAGE_NOT_FOUND;
             throw new Error("Page wasn't returned from the API.");
           }
         };
-        sendRequest<GetPageResult>(search, pageAction);
+        await sendRequest<GetPageResult>(search, pageAction);
       } catch (err) {
+        contentId.value = PAGE_NOT_FOUND;
         console.error(err);
       }
     }
@@ -118,25 +125,22 @@ watch(
 );
 
 watch(
-  commentChunks,
-  () => {
-    if (props.id) {
-      const current = commentChunks.value[parseInt(props.id)];
-      if (current) {
-        const last = current[current.length - 1];
-        if (last) {
-          const lastComment = last.comments[last.comments.length - 1];
-          if (lastComment) {
-            if (titleNotifications.value) {
-              document.title = lastComment.text;
-              changeFavicon(
-                api.getFileURL(
-                  lastComment.values?.a ||
-                    users.value[lastComment.createUserId].avatar,
-                  avatarSize.value
-                )
-              );
-            }
+  () => commentChunks.value[contentId.value],
+  (current) => {
+    if (current) {
+      const last = current[current.length - 1];
+      if (last) {
+        const lastComment = last.comments[last.comments.length - 1];
+        if (lastComment) {
+          if (titleNotifications.value) {
+            document.title = lastComment.text;
+            changeFavicon(
+              api.getFileURL(
+                lastComment.values?.a ||
+                  users.value[lastComment.createUserId].avatar,
+                avatarSize.value
+              )
+            );
           }
         }
       }
@@ -155,36 +159,41 @@ watch(
 </script>
 
 <template>
-  <main class="h-full flex flex-col">
-    <div
-      v-show="!showChat"
-      class="grow p-2 flex flex-col w-full overflow-scroll h-full"
-    >
-      <div class="text-2xl">
-        <span class="font-bold">
-          {{ contents[parseInt(props.id!)]?.data?.name || "Unknown" }}
-        </span>
-        <span>
-          [<router-link :to="`/edit-page/${props.id!}`">Edit</router-link>]
-        </span>
+  <main class="h-full">
+    <div class="h-full flex flex-col" v-if="contentId !== PAGE_NOT_FOUND">
+      <div
+        v-show="!showChat"
+        class="grow p-2 flex flex-col w-full overflow-scroll h-full"
+      >
+        <div class="text-2xl">
+          <span class="font-bold">
+            {{ contents[contentId]?.data?.name || "Unknown" }}
+          </span>
+          <span>
+            [<router-link :to="`/edit-page/${props.id!}`">Edit</router-link>]
+          </span>
+        </div>
+        <div class="min-h-max">
+          <MarkupRender
+            :content="contents[contentId]?.data?.text || '...'"
+            :lang="contents[contentId]?.data?.values?.markupLang"
+            :render="render"
+          />
+        </div>
       </div>
-      <div class="min-h-max">
-        <MarkupRender
-          :content="contents[parseInt(props.id!)]?.data?.text || '...'"
-          :lang="contents[parseInt(props.id!)]?.data?.values?.markupLang"
-          :render="render"
-        />
-      </div>
+      <div
+        class="shrink-0 bg-bcol h-4 md:h-2 md:hover:h-6 hover:cursor-pointer"
+        @click="showChat = !showChat"
+      ></div>
+      <ChatView
+        :contentId="contentId"
+        :showChatBox="loggedIn"
+        :showUserlist="loggedIn"
+        v-show="showChat"
+      />
     </div>
-    <div
-      class="shrink-0 bg-bcol h-4 md:h-2 md:hover:h-6 hover:cursor-pointer"
-      @click="showChat = !showChat"
-    ></div>
-    <ChatView
-      :contentId="parseInt(props.id!)"
-      :showChatBox="loggedIn"
-      :showUserlist="loggedIn"
-      v-show="showChat"
-    />
+    <div v-else>
+      COULD NOT FIND PAGE FROM API
+    </div>
   </main>
 </template>
