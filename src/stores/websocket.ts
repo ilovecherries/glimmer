@@ -15,8 +15,14 @@ import type { SearchRequests } from "contentapi-ts-bindings/Search/SearchRequest
 import { useIdentityStore } from "./identity";
 import { api } from "@/lib/qcs";
 
+export enum WebSocketState {
+  Disconnected,
+  Connected,
+}
+
 export type WebsocketStoreState = {
   socket?: ContentAPI_Socket;
+  state: WebSocketState
 };
 
 export const useWebsocketStore = defineStore({
@@ -24,6 +30,7 @@ export const useWebsocketStore = defineStore({
   state: () => {
     return {
       socket: undefined,
+      state: WebSocketState.Disconnected
     } as WebsocketStoreState;
   },
   actions: {
@@ -127,12 +134,15 @@ export const useWebsocketStore = defineStore({
           console.error(err);
         }
       };
+
+      this.state = WebSocketState.Connected;
     },
     sendRequest(data: SearchRequests, callback: ContentAPI_Socket_Function) {
       this.socket?.sendRequest(data, callback);
     },
     stop() {
-      this.socket?.socket.close();
+      this.socket?.socket?.close();
+      this.state = WebSocketState.Disconnected;
       this.socket = undefined;
     },
     whenReady(func: () => void) {

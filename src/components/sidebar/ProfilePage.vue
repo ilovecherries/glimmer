@@ -3,19 +3,29 @@ import { useIdentityStore } from "@/stores/identity";
 import { storeToRefs } from "pinia";
 import { useSettingsStore, THEMES } from "@/stores/settings";
 import { api } from "@/lib/qcs";
+import { useWebsocketStore } from "@/stores/websocket";
 
 const identity = useIdentityStore();
 const settings = useSettingsStore();
+const websocket = useWebsocketStore();
 
 const { login, logout } = identity;
 const { session, user } = storeToRefs(identity);
 const { avatarSize, nickname, theme } = storeToRefs(settings);
+const { start: startWS, stop: stopWS } = websocket;
 
 function signIn(username: string, password: string) {
   login(username, password);
 }
 
 const domain = import.meta.env.VITE_API_DOMAIN;
+
+async function restartSocket() {
+  stopWS();
+  if (identity.session) {
+    startWS(identity.session);
+  }
+}
 
 let loginUsername = "",
   formPassword = "",
@@ -39,6 +49,7 @@ let loginUsername = "",
       <div>Create date: {{ user?.createDate }}</div>
       <button class="block" @click="logout()">Log out</button>
       <div><span>Nickname: </span><input type="text" v-model="nickname" /></div>
+      <button class="block" @click="">Restart WebSocket</button>
     </div>
     <div v-else class="p-2">
       <h2 class="text-2xl">{{ domain }}</h2>

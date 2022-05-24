@@ -2,7 +2,7 @@
 import { RouterView } from "vue-router";
 import SideBar from "@/components/SideBar.vue";
 import { useIdentityStore } from "./stores/identity";
-import { useWebsocketStore } from "./stores/websocket";
+import { useWebsocketStore, WebSocketState } from "./stores/websocket";
 import { watch } from "vue";
 import { useStateStore } from "./stores/state";
 import { storeToRefs } from "pinia";
@@ -33,7 +33,7 @@ const { messageInitialLoad } = storeToRefs(shared);
 const { theme } = storeToRefs(settings);
 
 const ws = useWebsocketStore();
-const { socket } = storeToRefs(ws);
+const { socket, state: wsState } = storeToRefs(ws);
 
 function manageWS() {
   if (session?.value && !socket?.value) ws.start(session.value);
@@ -124,7 +124,7 @@ watch(
           <div
             v-if="session"
             :class="`h-2 w-2 mx-3 my-auto rounded-full ${
-              socket ? 'bg-green-400' : 'bg-red-600'
+              wsState === WebSocketState.Connected ? 'bg-green-400' : 'bg-red-600'
             }`"
             title="WebSocket Status"
           ></div>
