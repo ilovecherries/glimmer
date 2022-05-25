@@ -3,6 +3,7 @@ const PageEditView = () => import("@/views/PageEditView.vue");
 const HomeView = () => import("../views/HomeView.vue");
 const PageView = () => import("../views/PageView.vue");
 const UserView = () => import("../views/UserView.vue");
+const CanvasView = () => import("../views/CanvasView.vue");
 
 export const router = createRouter({
   history: createWebHashHistory(),
@@ -28,6 +29,12 @@ export const router = createRouter({
       path: "/user/:userId",
       name: "user",
       component: UserView,
+      props: true,
+    },
+    {
+      path: "/fore",
+      name: "fore",
+      component: CanvasView,
       props: true,
     }
   ],

@@ -9,6 +9,10 @@ import type { SearchRequests } from "contentapi-ts-bindings/Search/SearchRequest
 import type { LiveEvent } from "contentapi-ts-bindings/Live/LiveEvent";
 import type { LiveData } from "contentapi-ts-bindings/Live/LiveData";
 import { api } from "@/lib/qcs";
+import { getPageRequest } from "contentapi-ts-bindings/Helpers";
+import type { GetPageResult } from "contentapi-ts-bindings/Helpers";
+import { ContentState, useSharedStore } from "@/stores/shared";
+import { nextTick } from "vue";
 
 export const sendRequest = async <T = Record<string, Array<object>>>(
   search: SearchRequests,
@@ -82,3 +86,32 @@ export function last<T>(arr: Array<T> | undefined): T | undefined {
 }
 
 export const render = Renderer.render;
+
+export const loadPage = async (id: number): Promise<void> => {
+  const shared = useSharedStore();
+  if (
+    shared.contents[id] &&
+    shared.contents[id].state === ContentState.full
+  ) {
+    return;
+  }
+
+  const search = getPageRequest(id, { messagePage: 0 });
+  const pageAction = (data: GetPageResult) => {
+    const page = data.content?.shift();
+    if (page) {
+      shared.addContent(page, ContentState.full);
+      data.user?.map(shared.addUser);
+      const messages = data.message;
+      if (messages) {
+        messages.map(shared.addComment);
+        shared.sortComments();
+        shared.rebuildCommentChunks(id);
+        shared.rebuildActivityChunks();
+      }
+    } else {
+      throw new Error("Page wasn't returned from the API.");
+    }
+  };
+  return sendRequest<GetPageResult>(search, pageAction);
+}

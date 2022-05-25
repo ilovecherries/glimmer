@@ -7,9 +7,9 @@ import { useWebsocketStore } from "@/stores/websocket";
 import { storeToRefs } from "pinia";
 import { nextTick, ref, watch } from "vue";
 import ChatView from "../components/ChatView.vue";
-import { render, sendRequest } from "@/lib/helpers";
+import { loadPage, render, sendRequest } from "@/lib/helpers";
 import MarkupRender from "@/components/MarkupRender.vue";
-import { onBeforeRouteLeave, onBeforeRouteUpdate, routeLocationKey, useRoute } from "vue-router";
+import { onBeforeRouteLeave, onBeforeRouteUpdate, useRoute } from "vue-router";
 import {
   getPageRequest,
   Status,
@@ -72,52 +72,20 @@ onBeforeRouteUpdate(removeOldStatus);
 
 watch(
   () => route.params.id,
-  async (param) => {
+  (param) => {
     if (param !== undefined) {
       const id = parseInt(param as string);
-      if (
-        contents.value[id] &&
-        contents.value[id].state === ContentState.full
-      ) {
-        const page = contents.value[id].data;
-        contentId.value = id;
-        headerText.value = page.name;
-        nextTick(() => {
-          websocket.setStatus(id);
-        });
-        clearNotif();
-        return;
-      }
-      try {
-        const search = getPageRequest(id, { messagePage: 0 });
-        const pageAction = (data: GetPageResult) => {
-          const page = data.content?.shift();
-          if (page) {
-            shared.addContent(page, ContentState.full);
-            headerText.value = page.name;
-            data.user?.map(shared.addUser);
-            const messages = data.message;
-            if (messages) {
-              messages.map(shared.addComment);
-              shared.sortComments();
-              shared.rebuildCommentChunks(id);
-              shared.rebuildActivityChunks();
-            }
-            nextTick(() => {
-              websocket.setStatus(id);
-            });
-            contentId.value = page.id;
-            clearNotif();
-          } else {
-            contentId.value = PAGE_NOT_FOUND;
-            throw new Error("Page wasn't returned from the API.");
-          }
-        };
-        await sendRequest<GetPageResult>(search, pageAction);
-      } catch (err) {
-        contentId.value = PAGE_NOT_FOUND;
-        console.error(err);
-      }
+      loadPage(id)
+        .then(() => {
+          contentId.value = id;
+          clearNotif();
+          nextTick(() => {
+            websocket.setStatus(id, Status.active);
+          });
+        })
+        .catch(() => {
+          contentId.value = -1;
+        })
     }
   },
   { immediate: true }
