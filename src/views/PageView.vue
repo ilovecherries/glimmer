@@ -2,19 +2,15 @@
 import { useIdentityStore } from "@/stores/identity";
 import { useSettingsStore } from "@/stores/settings";
 import { useStateStore } from "@/stores/state";
-import { ContentState, useSharedStore } from "@/stores/shared";
+import { useSharedStore } from "@/stores/shared";
 import { useWebsocketStore } from "@/stores/websocket";
 import { storeToRefs } from "pinia";
 import { nextTick, ref, watch } from "vue";
 import ChatView from "../components/ChatView.vue";
-import { loadPage, render, sendRequest } from "@/lib/helpers";
+import { loadPage, render } from "@/lib/helpers";
 import MarkupRender from "@/components/MarkupRender.vue";
 import { onBeforeRouteLeave, onBeforeRouteUpdate, useRoute } from "vue-router";
-import {
-  getPageRequest,
-  Status,
-  type GetPageResult,
-} from "contentapi-ts-bindings/Helpers";
+import { Status } from "contentapi-ts-bindings/Helpers";
 import { api } from "@/lib/qcs";
 
 const identity = useIdentityStore();
@@ -75,14 +71,15 @@ watch(
   (param) => {
     if (param !== undefined) {
       const id = parseInt(param as string);
-      loadPage(id)
-        .then(() => {
+      loadPage(id, () => {
           contentId.value = id;
+          headerText.value = contents.value[id].data.name;
           clearNotif();
           nextTick(() => {
             websocket.setStatus(id, Status.active);
           });
-        })
+
+      })
         .catch(() => {
           contentId.value = -1;
         })

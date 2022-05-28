@@ -160,3 +160,7 @@ body, #app {
 .Markup video:hover, .Markup video:focus {
   max-height: 50vh;
 }
+
+main {
+  position: relative;
+}

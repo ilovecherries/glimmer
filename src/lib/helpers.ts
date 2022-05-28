@@ -1,7 +1,7 @@
 import { useWebsocketStore } from "@/stores/websocket";
 
 import { useIdentityStore } from "../stores/identity";
-import type { Message } from "contentapi-ts-bindings/Views";
+import type { Content, Message } from "contentapi-ts-bindings/Views";
 import HighlightJS from "highlight.js";
 import Markup_Render_Dom from "markup2/render";
 import { useStateStore } from "@/stores/state";
@@ -87,13 +87,13 @@ export function last<T>(arr: Array<T> | undefined): T | undefined {
 
 export const render = Renderer.render;
 
-export const loadPage = async (id: number): Promise<void> => {
+export const loadPage = async (id: number, callback: () => void) => {
   const shared = useSharedStore();
   if (
     shared.contents[id] &&
     shared.contents[id].state === ContentState.full
   ) {
-    return;
+    callback();
   }
 
   const search = getPageRequest(id, { messagePage: 0 });
@@ -109,9 +109,10 @@ export const loadPage = async (id: number): Promise<void> => {
         shared.rebuildCommentChunks(id);
         shared.rebuildActivityChunks();
       }
+      callback();
     } else {
       throw new Error("Page wasn't returned from the API.");
     }
   };
-  return sendRequest<GetPageResult>(search, pageAction);
+  await sendRequest<GetPageResult>(search, pageAction);
 }
