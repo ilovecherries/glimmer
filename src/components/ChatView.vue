@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useSharedStore } from "@/stores/shared";
+import { useSharedStore, type CommentChunk } from "@/stores/shared";
 import { storeToRefs } from "pinia";
 import { nextTick, ref, watch } from "vue";
 import { useSettingsStore } from "@/stores/settings";
@@ -10,18 +10,18 @@ import type { User, Message } from "contentapi-ts-bindings/Views";
 import ScrollerView from "./ScrollerView.vue";
 import { rethreadMessages, sendRequest } from "../lib/helpers";
 import { render, last } from "../lib/helpers";
-import UserlistAvatar from "./UserlistAvatar.vue";
 import {
   SearchRequest,
   SearchRequests,
 } from "contentapi-ts-bindings/Search/SearchRequests";
 import { RequestType } from "contentapi-ts-bindings/Search/RequestType";
+import UserList from "./UserList.vue";
 
 const shared = useSharedStore();
 const settings = useSettingsStore();
 const identity = useIdentityStore();
 
-const { commentChunks, userlists, users, contents } = storeToRefs(shared);
+const { commentChunks, contents } = storeToRefs(shared);
 const { avatarSize, nickname, ignoredUsers, commentPagination, markup } =
   storeToRefs(settings);
 
@@ -238,14 +238,6 @@ watch(editContent, () => {
 });
 
 watch(
-  rethreadingMessages,
-  () => {
-    console.log(rethreadingMessages.value);
-  },
-  { deep: true }
-);
-
-watch(
   () => last(commentChunks.value[props.contentId || 0] || [])?.comments,
   () => {
     if (typeof props.contentId === "number") {
@@ -258,13 +250,31 @@ watch(
   { immediate: true, deep: true }
 );
 
-function toggleIgnoreUser(uid: number) {
-  if (ignoredUsers.value.findIndex((x) => x === uid) === -1) {
-    ignoredUsers.value.push(uid);
-  } else {
-    ignoredUsers.value = ignoredUsers.value.filter((x) => x !== uid);
+const chunks = ref([] as CommentChunk[]);
+
+const refreshChunks = (
+  ch = commentChunks.value[props.contentId || 0] || []
+) => {
+  chunks.value = ch.filter(
+    (c) => ignoredUsers.value.findIndex((x) => x === c.uid) == -1
+  );
+};
+
+watch(() => commentChunks.value[props.contentId || 0], refreshChunks, {
+  immediate: true,
+  deep: true,
+});
+
+watch(
+  () => ignoredUsers.value,
+  () => {
+    refreshChunks();
+  },
+  {
+    immediate: true,
+    deep: true,
   }
-}
+);
 
 function canRethread(comment: Message): boolean {
   return (
@@ -307,25 +317,7 @@ function resizeEditBox() {
     </div>
     <div class="h-8 md:h-10 w-full bg-accent flex" v-if="showUserlist">
       <div class="grow">
-        <div
-          v-if="props.contentId && userlists[props.contentId]"
-          class="flex w-full h-full"
-        >
-          <div
-            v-for="u in Object.keys(userlists[props.contentId]).map((x) =>
-              parseInt(x)
-            )"
-            :key="u"
-            class="relative h-full"
-          >
-            <UserlistAvatar :uid="u">
-              <div>{{ users[u].createDate }}</div>
-              <div @click="toggleIgnoreUser(u)" class="hover:cursor-pointer">
-                Ignore User
-              </div>
-            </UserlistAvatar>
-          </div>
-        </div>
+        <UserList :content-id="props.contentId" />
       </div>
       <div class="shrink-0 w-8 h-full">
         <button
@@ -339,7 +331,7 @@ function resizeEditBox() {
     <div class="flex flex-col grow h-full">
       <ScrollerView
         v-if="props.contentId"
-        :watch-value="last(last(commentChunks[props.contentId || 0])?.comments)"
+        :watch-value="last(last(chunks)?.comments)"
         :view="props.contentId"
         :animate="true"
       >
@@ -360,12 +352,7 @@ function resizeEditBox() {
             LOAD OLDER MESSAGES
           </button>
         </div>
-        <div
-          v-for="c in commentChunks[props.contentId]"
-          :key="c.firstId"
-          v-show="ignoredUsers.findIndex((x) => x === c.uid) == -1"
-          class="flex mx-1 my-2"
-        >
+        <div v-for="c in chunks" :key="c.firstId" class="flex mx-1 my-2">
           <img
             :src="api.getFileURL(c.avatar, avatarSize)"
             class="w-auto h-6 md:h-12 mx-1 md:mr-2 md:rounded border border-bcol"
