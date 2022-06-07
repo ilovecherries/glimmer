@@ -32,7 +32,7 @@ const { avatarSize, activityDisplayUsername, ignoredUsers } =
       </div>
       <div
         v-for="c in a.comments"
-        class="flex activity-bar"
+        class="flex activity-bar gap-1"
         :key="c.id"
         v-show="ignoredUsers.findIndex((x) => x === c.createUserId) == -1"
       >

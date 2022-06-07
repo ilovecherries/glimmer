@@ -50,3 +50,7 @@ npm run test:unit
 ```sh
 npm run lint
 ```
+
+dedicated to fluttershy. i want to make features that she would
+have wanted, now. if i can't be enough, then maybe my creations
+will be. if it's not what they want, i've lost.

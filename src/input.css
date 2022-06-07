@@ -83,7 +83,7 @@
     @apply hover:bg-item-hover p-1
   }
 
-  textarea {
+  input, textarea {
     @apply focus:outline-none
   }
 
@@ -159,4 +159,8 @@ body, #app {
 
 .Markup video:hover, .Markup video:focus {
   max-height: 50vh;
+}
+
+main {
+  position: relative;
 }

@@ -5,12 +5,12 @@ import { useSharedStore } from "../../stores/shared";
 import type { Notification } from "../../stores/shared";
 import ActivityLogPane from "./ActivityLogPane.vue";
 import defaultPageIcon from "@/assets/SB-thread.png";
-import UserlistAvatar from "../UserlistAvatar.vue";
 import { api } from "@/lib/qcs";
+import UserList from "../UserList.vue";
 
 const shared = useSharedStore();
 
-const { contents, notifications, userlists, users } = storeToRefs(shared);
+const { contents, notifications } = storeToRefs(shared);
 
 let notificationsView = ref<Array<Notification>>([]);
 
@@ -40,35 +40,8 @@ watch(
 <template>
   <div class="grow flex flex-col">
     <div class="grow flex flex-col border-b border-bcol">
-      <div
-        v-if="userlists[0]"
-        class="flex w-full h-6 shrink-0 bg-accent border-b border-bcol"
-      >
-        <div
-          v-for="(u, index) in Object.keys(userlists[0]).map((x) =>
-            parseInt(x)
-          )"
-          :key="index"
-          class="relative"
-        >
-          <UserlistAvatar :uid="u">
-            <div>Currently Browsing</div>
-            <div
-              v-for="room in Object.keys(userlists).filter(
-                (x) =>
-                  x !== '0' &&
-                  Object.keys(userlists[x]).findIndex(
-                    (y) => parseInt(y) === u
-                  ) !== -1
-              )"
-              :key="room"
-            >
-              <router-link :to="`/page/${room}`">
-                {{ contents[parseInt(room)]?.data.name || "Unknown" }}
-              </router-link>
-            </div>
-          </UserlistAvatar>
-        </div>
+      <div class="flex w-full h-6 shrink-0 bg-accent">
+        <UserList :content-id="0" />
       </div>
       <div class="grow overflow-y-auto w-full">
         <div

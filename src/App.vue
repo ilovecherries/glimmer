@@ -20,6 +20,7 @@ import type {
   User,
 } from "contentapi-ts-bindings/Views";
 import { RequestType } from "contentapi-ts-bindings/Search/RequestType";
+import ImageCatalogue from "./components/ImageCatalogue.vue";
 
 const identity = useIdentityStore();
 const state = useStateStore();
@@ -129,19 +130,25 @@ watch(
             title="WebSocket Status"
           ></div>
         </div>
-        <button
-          @click="state.openSidebar = !state.openSidebar"
-          class="bg-accent hover:bg-item-hover shrink-0 w-6 h-5 my-auto mx-1 px-1"
-        >
-          =
-        </button>
+        <div class="h-full flex">
+          <ImageCatalogue />
+        </div>
+        <div class="h-full flex">
+          <button
+            @click="state.openSidebar = !state.openSidebar"
+            class="w-6 px-6"
+          >
+            =
+          </button>
+
+        </div>
       </header>
       <div
         :class="`grid grid-cols-1 ${
           openSidebar ? 'md:grid-cols-[6fr_2fr]' : ''
         } w-full grow`"
       >
-        <div :class="`h-full ${openSidebar ? 'hidden' : 'block'} md:block`">
+        <div id="main-content" :class="`h-full ${openSidebar ? 'hidden' : 'block'} md:block`">
           <RouterView />
         </div>
         <SideBar />
