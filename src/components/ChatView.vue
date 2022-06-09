@@ -14,8 +14,10 @@ import {
   SearchRequest,
   SearchRequests,
 } from "contentapi-ts-bindings/Search/SearchRequests";
+import { uploadFile } from "contentapi-ts-bindings/BrowserHelpers";
 import { RequestType } from "contentapi-ts-bindings/Search/RequestType";
 import UserList from "./UserList.vue";
+import type { ContentAPI_Session } from "contentapi-ts-bindings/Helpers";
 
 const shared = useSharedStore();
 const settings = useSettingsStore();
@@ -147,14 +149,19 @@ function upArrowEdit() {
 
 async function uploadImage() {
   try {
-    const hash = await identity.session?.uploadFile(imageData.value as Blob);
-    if (hash) {
-      const url = api.getFileURL(hash, 0);
-      imageFileUrl.value = url;
-      nextTick(() => {
-        imageFileUrlEl.value?.focus();
-        imageFileUrlEl.value?.select();
-      });
+    if (identity.session) {
+      const hash = await uploadFile(
+        identity.session as ContentAPI_Session,
+        imageData.value as Blob
+      );
+      if (hash) {
+        const url = api.getFileURL(hash, 0);
+        imageFileUrl.value = url;
+        nextTick(() => {
+          imageFileUrlEl.value?.focus();
+          imageFileUrlEl.value?.select();
+        });
+      }
     }
   } catch (e) {
     console.error(e);

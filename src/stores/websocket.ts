@@ -2,9 +2,9 @@ import { UserAction } from "contentapi-ts-bindings/Enums";
 import {
   Status,
   type ContentAPI_Session,
-  type ContentAPI_Socket,
   type ContentAPI_Socket_Function,
 } from "contentapi-ts-bindings/Helpers";
+import { ContentAPI_Browser_Socket } from "contentapi-ts-bindings/BrowserHelpers";
 import { LiveEventType } from "contentapi-ts-bindings/Live/LiveEvent";
 import { WebSocketResponseType } from "contentapi-ts-bindings/Live/WebSocketResponse";
 import type { Content, Message, User } from "contentapi-ts-bindings/Views";
@@ -21,7 +21,7 @@ export enum WebSocketState {
 }
 
 export type WebsocketStoreState = {
-  socket?: ContentAPI_Socket;
+  socket?: ContentAPI_Browser_Socket;
   state: WebSocketState
 };
 
@@ -44,7 +44,7 @@ export const useWebsocketStore = defineStore({
       }
       console.log(api, api.wsPath, api.path);
       console.log(session)
-      this.socket = session.createSocket();
+      this.socket = session.createSocket(ContentAPI_Browser_Socket);
       console.log("👑 WebSocket Started");
 
       const shared = useSharedStore();
@@ -134,6 +134,7 @@ export const useWebsocketStore = defineStore({
           console.error(err);
         }
       };
+      console.log(this.socket)
 
       this.state = WebSocketState.Connected;
     },
