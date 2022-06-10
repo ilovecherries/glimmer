@@ -1,8 +1,8 @@
 import { useWebsocketStore } from "@/stores/websocket";
 
 import { useIdentityStore } from "../stores/identity";
-import type { Content, Message } from "contentapi-ts-bindings/Views";
-import HighlightJS from "highlight.js";
+import type { Message } from "contentapi-ts-bindings/Views";
+import HighlightJS from "highlight.js/lib/core";
 import Markup_Render_Dom from "markup2/render";
 import { useStateStore } from "@/stores/state";
 import type { SearchRequests } from "contentapi-ts-bindings/Search/SearchRequests";
@@ -12,7 +12,43 @@ import { api } from "@/lib/qcs";
 import { getPageRequest } from "contentapi-ts-bindings/Helpers";
 import type { GetPageResult } from "contentapi-ts-bindings/Helpers";
 import { ContentState, useSharedStore } from "@/stores/shared";
-import { nextTick } from "vue";
+
+import javascript from "highlight.js/lib/languages/javascript";
+import typescript from "highlight.js/lib/languages/typescript";
+import css from "highlight.js/lib/languages/css";
+import rust from "highlight.js/lib/languages/rust";
+import sql from "highlight.js/lib/languages/sql";
+import json from "highlight.js/lib/languages/json";
+import xml from "highlight.js/lib/languages/xml";
+import lua from "highlight.js/lib/languages/lua";
+import ruby from "highlight.js/lib/languages/ruby";
+import c from "highlight.js/lib/languages/c";
+import cpp from "highlight.js/lib/languages/cpp";
+import haskell from "highlight.js/lib/languages/haskell";
+import powershell from "highlight.js/lib/languages/powershell";
+import csharp from "highlight.js/lib/languages/csharp";
+import x86asm from "highlight.js/lib/languages/x86asm";
+import { smilebasic } from "./smilebasic";
+
+HighlightJS.registerLanguage("javascript", javascript);
+HighlightJS.registerLanguage("typescript", typescript);
+HighlightJS.registerLanguage("css", css);
+HighlightJS.registerLanguage("rust", rust);
+HighlightJS.registerLanguage("sql", sql);
+HighlightJS.registerLanguage("json", json);
+HighlightJS.registerLanguage("xml", xml);
+HighlightJS.registerLanguage("html", xml); // fuck you
+HighlightJS.registerLanguage("lua", lua);
+HighlightJS.registerLanguage("ruby", ruby);
+HighlightJS.registerLanguage("ruby", ruby);
+HighlightJS.registerLanguage("c", c);
+HighlightJS.registerLanguage("cpp", cpp);
+HighlightJS.registerLanguage("csharp", csharp);
+HighlightJS.registerLanguage("haskell", haskell);
+HighlightJS.registerLanguage("powershell", powershell);
+HighlightJS.registerLanguage("x86asm", x86asm);
+HighlightJS.registerLanguage("smilebasic", smilebasic);
+HighlightJS.registerLanguage("sb", smilebasic);
 
 export const sendRequest = async <T = Record<string, Array<object>>>(
   search: SearchRequests,
@@ -89,10 +125,7 @@ export const render = Renderer.render;
 
 export const loadPage = async (id: number, callback: () => void) => {
   const shared = useSharedStore();
-  if (
-    shared.contents[id] &&
-    shared.contents[id].state === ContentState.full
-  ) {
+  if (shared.contents[id] && shared.contents[id].state === ContentState.full) {
     callback();
   }
 
@@ -115,4 +148,4 @@ export const loadPage = async (id: number, callback: () => void) => {
     }
   };
   await sendRequest<GetPageResult>(search, pageAction);
-}
+};
