@@ -57,13 +57,9 @@ let rethreadingContentId = 0;
 
 let sendingMessage = false;
 
-async function sendMessage() {
-  if (!props.contentId || textboxContent.value.trim() === "" || sendingMessage)
-    return;
-  sendingMessage = true;
-
+const generateMessage = (text: string): Partial<Message> => {
   let msg: Partial<Message> = {
-    text: textboxContent.value.trim(),
+    text: text.trim(),
     contentId: props.contentId,
     values: {
       m: markup.value,
@@ -74,6 +70,16 @@ async function sendMessage() {
   if (msg.values && nickname.value) {
     msg.values.n = nickname.value;
   }
+
+  return msg;
+};
+
+async function sendMessage() {
+  const text = textboxContent.value.trim();
+  if (!props.contentId || text === "" || sendingMessage) return;
+  sendingMessage = true;
+
+  let msg = generateMessage(text);
 
   const oldValue = textboxContent.value;
   textboxContent.value = "";
@@ -96,25 +102,16 @@ function stopEdit() {
 async function editMessage() {
   if (!props.contentId) return;
 
-  if (editContent.value.trim() === "") {
+  const text = editContent.value.trim();
+
+  if (text === "") {
     await deleteMessage(editing.value);
     editing.value = -1;
     return;
   }
 
-  let msg: Partial<Message> = {
-    id: editing.value,
-    text: editContent.value.trim(),
-    contentId: props.contentId,
-    values: {
-      m: markup.value,
-      a: identity.avatar,
-    },
-  };
-
-  if (nickname.value && msg.values) {
-    msg.values.n = nickname.value;
-  }
+  let msg = generateMessage(text);
+  msg.id = editing.value;
 
   try {
     await identity.session?.write("message", msg);

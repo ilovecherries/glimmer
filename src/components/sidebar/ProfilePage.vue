@@ -4,6 +4,7 @@ import { storeToRefs } from "pinia";
 import { useSettingsStore, THEMES } from "@/stores/settings";
 import { api } from "@/lib/qcs";
 import { useWebsocketStore } from "@/stores/websocket";
+import { MARKUPS } from "contentapi-ts-bindings/Views/Extras/MarkupLanguage";
 
 const identity = useIdentityStore();
 const settings = useSettingsStore();
@@ -11,7 +12,7 @@ const websocket = useWebsocketStore();
 
 const { login, logout } = identity;
 const { session, user } = storeToRefs(identity);
-const { avatarSize, nickname, theme } = storeToRefs(settings);
+const { avatarSize, nickname, theme, markup } = storeToRefs(settings);
 const { start: startWS, stop: stopWS } = websocket;
 
 function signIn(username: string, password: string) {
@@ -49,11 +50,11 @@ let loginUsername = "",
       <div>Create date: {{ user?.createDate }}</div>
       <button class="block" @click="logout()">Log out</button>
       <div><span>Nickname: </span><input type="text" v-model="nickname" /></div>
-      <button class="block" @click="">Restart WebSocket</button>
+      <button class="block" @click="restartSocket()">Restart WebSocket</button>
     </div>
     <div v-else class="p-2">
       <h2 class="text-2xl">{{ domain }}</h2>
-      <hr>
+      <hr />
       <h3 class="text-xl">login</h3>
       <form @submit.prevent="signIn(loginUsername, formPassword)">
         <div>
@@ -101,7 +102,9 @@ let loginUsername = "",
           />
         </div>
         <div>
-          <label for="register-password" class="block text-lg"> Password: </label>
+          <label for="register-password" class="block text-lg">
+            Password:
+          </label>
           <input
             v-model="registerPassword"
             id="login-password"
@@ -125,11 +128,22 @@ let loginUsername = "",
         </option>
       </select>
     </div>
+    <div>
+      <span class="pr-4">markup:</span>
+      <select
+        v-model="markup"
+        class="text-textColor bg-document border-bcol border-2 rounded"
+      >
+        <option v-for="(t, index) in MARKUPS" :value="t" :key="index">
+          {{ t }}
+        </option>
+      </select>
+    </div>
   </div>
 </template>
 
 <style scoped>
-  h3 {
-    margin-top: 1em;
-  }
+h3 {
+  margin-top: 1em;
+}
 </style>
