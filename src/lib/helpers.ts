@@ -50,21 +50,21 @@ HighlightJS.registerLanguage("x86asm", x86asm);
 HighlightJS.registerLanguage("smilebasic", smilebasic);
 HighlightJS.registerLanguage("sb", smilebasic);
 
-export const sendRequest = async <T = Record<string, Array<object>>>(
-  search: SearchRequests,
-  callback: (data: T) => void
-) => {
-  const identity = useIdentityStore();
+export const sendRequest = <T = Record<string, Array<object>>>(
+  search: SearchRequests
+): Promise<T> => {
+  return new Promise((resolve, reject) => {
+    const identity = useIdentityStore();
 
-  if (identity.loggedIn) {
-    const ws = useWebsocketStore();
-    ws.sendRequest(search, (a: LiveEvent) => {
-      callback((a.data as unknown as LiveData<T>).objects);
-    });
-  } else {
-    const data = await api.request<T>(search);
-    callback(data.objects);
-  }
+    if (identity.loggedIn) {
+      const ws = useWebsocketStore();
+      ws.sendRequest(search, (a: LiveEvent) => {
+        resolve((a.data as unknown as LiveData<T>).objects);
+      });
+    } else {
+      api.request<T>(search).then((x) => resolve(x.objects));
+    }
+  });
 };
 
 export const rethreadMessages = async (
@@ -144,5 +144,5 @@ export const loadPage = async (id: number, callback: () => void) => {
       throw new Error("Page wasn't returned from the API.");
     }
   };
-  await sendRequest<GetPageResult>(search, pageAction);
+  await sendRequest<GetPageResult>(search).then(pageAction);
 };

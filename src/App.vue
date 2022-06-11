@@ -76,7 +76,7 @@ watch(
         ]
       );
       console.log("🏄 Getting initial Message Aggregate to populate activity");
-      sendRequest(search, (data) => {
+      sendRequest(search).then((data) => {
         const shared = useSharedStore();
         data.content?.map((x) =>
           shared.addContent(x as Content, ContentState.partial)

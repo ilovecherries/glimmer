@@ -56,7 +56,7 @@ watch(
           throw new Error("Page wasn't returned from the API.");
         }
       };
-      sendRequest<GetPageResult>(search, pageAction);
+      sendRequest<GetPageResult>(search).then(pageAction);
     }
   },
   { immediate: true }

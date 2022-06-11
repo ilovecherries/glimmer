@@ -43,9 +43,19 @@ export const useWebsocketStore = defineStore({
         return;
       }
       console.log(api, api.wsPath, api.path);
-      console.log(session)
+      console.log(session);
       this.socket = session.createSocket(ContentAPI_Browser_Socket);
       console.log("👑 WebSocket Started");
+
+      // :/
+      if (this.socket && this.socket.socket) {
+        this.socket.socket.onclose = (ev) => {
+          this.start(session);
+        };
+        this.socket.socket.onerror = (ev) => {
+          this.start(session);
+        };
+      }
 
       const shared = useSharedStore();
 

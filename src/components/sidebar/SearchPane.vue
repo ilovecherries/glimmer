@@ -11,17 +11,12 @@ import {
   SearchRequests,
 } from "contentapi-ts-bindings/Search/SearchRequests";
 import { RequestType } from "contentapi-ts-bindings/Search/RequestType";
+import SearchArea from "../SearchArea.vue";
+import type { SearchResult } from "../SearchArea";
 
-const settings = useSettingsStore();
-const { avatarSize } = storeToRefs(settings);
-
-let query = "";
-
-let users = ref<undefined | Partial<User>[]>(undefined);
-let contents = ref<undefined | Partial<Content>[]>(undefined);
 const limit = 15;
 
-const search = (query: string) => {
+const search = async (query: string) => {
   const search = new SearchRequests(
     {
       text: `%${query}%`,
@@ -47,37 +42,27 @@ const search = (query: string) => {
     user: Array<Pick<User, "username" | "id" | "avatar">>;
     content: Array<Pick<Content, "name" | "id" | "values">>;
   };
-  sendRequest<QueryResult>(search, (data) => {
-    users.value = data.user;
-    contents.value = data.content;
-  });
+  const data = await sendRequest<QueryResult>(search);
+  console.log(data);
+  const userResults: SearchResult[] =
+    data.user?.map((x) => ({
+      content: x.username,
+      thumbnail: x.avatar,
+      link: `/user/${x.id}`,
+    })) || [];
+  const contentResults: SearchResult[] =
+    data.content?.map((x) => ({
+      content: x.name,
+      thumbnail: x.values.thumbnail,
+      link: `/page/${x.id}`,
+    })) || [];
+  return userResults.concat(contentResults);
 };
 </script>
 
 <template>
-  <div class="grow w-full overflow-y-scroll">
-    <input type="text" v-model="query" class="border border-bcol m-2 w-[80%]" />
-    <button @click="search(query)">Search</button>
-    <div v-if="contents">
-      <h1>Pages</h1>
-      <div v-for="c in contents" :key="c.id">
-        <img :src="ThreadImage" class="h-6 w-6 border border-bcol inline" />
-        <router-link :to="`/page/${c.id}`" class="inline">{{
-          c.name
-        }}</router-link>
-      </div>
-    </div>
-    <div v-if="users">
-      <h1>Users</h1>
-      <div v-for="u in users" :key="u.id">
-        <img
-          :src="u?.avatar ? api.getFileURL(u.avatar, avatarSize) : ''"
-          class="h-6 w-6 border border-bcol inline"
-        />
-        <router-link :to="`/user/${u.id}`" class="inline">{{
-          u.username
-        }}</router-link>
-      </div>
-    </div>
+  <div class="grow w-full">
+    <SearchArea :search="search" />
+    <div>OWO</div>
   </div>
 </template>
