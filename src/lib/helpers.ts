@@ -78,14 +78,11 @@ export const rethreadMessages = async (
       contentId,
       message: `Rethreaded messages to ${contentId}`,
     };
-    const pageReq = await fetch(
-      `https://${import.meta.env.VITE_API_DOMAIN}/api/Shortcuts/rethread`,
-      {
-        method: "POST",
-        headers: identity.headers,
-        body: JSON.stringify(params),
-      }
-    );
+    const pageReq = await fetch(`${api.path}/Shortcuts/rethread`, {
+      method: "POST",
+      headers: identity.headers,
+      body: JSON.stringify(params),
+    });
     const pageJson: Array<Message> = await pageReq.json();
     return pageJson;
   } else {

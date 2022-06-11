@@ -44,7 +44,7 @@ function toggleIgnoreUser(uid: number) {
           {{ users[u].username }}
         </router-link>
         <hr />
-        <button @click="toggleIgnoreUser(u)">Ignore User</button>
+        <button class="block" @click="toggleIgnoreUser(u)">Ignore User</button>
         OwO World!
       </div>
     </div>

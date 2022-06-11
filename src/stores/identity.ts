@@ -67,25 +67,8 @@ export const useIdentityStore = defineStore({
     },
     async login(username: string, password: string) {
       try {
-        const req = await fetch(
-          `https://${import.meta.env.VITE_API_DOMAIN}/api/User/login`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ username, password }),
-          }
-        );
-        switch (req.status) {
-          case 200: {
-            const token = await req.text();
-            await this.refresh(token);
-            break;
-          }
-          default:
-            throw Error(`Login failed\n${req.statusText}`);
-        }
+        const token = await api.login(username, password);
+        await this.refresh(token);
       } catch (err) {
         console.error(err);
       }

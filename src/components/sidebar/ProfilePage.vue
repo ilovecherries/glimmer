@@ -5,15 +5,20 @@ import { useSettingsStore, THEMES } from "@/stores/settings";
 import { api } from "@/lib/qcs";
 import { useWebsocketStore } from "@/stores/websocket";
 import { MARKUPS } from "contentapi-ts-bindings/Views/Extras/MarkupLanguage";
+import type { User } from "contentapi-ts-bindings/Views";
+import { useSharedStore } from "@/stores/shared";
 
 const identity = useIdentityStore();
 const settings = useSettingsStore();
 const websocket = useWebsocketStore();
+const shared = useSharedStore();
 
 const { login, logout } = identity;
 const { session, user } = storeToRefs(identity);
 const { avatarSize, nickname, theme, markup } = storeToRefs(settings);
 const { start: startWS, stop: stopWS } = websocket;
+
+let newAvatarHash = "";
 
 function signIn(username: string, password: string) {
   login(username, password);
@@ -26,6 +31,15 @@ async function restartSocket() {
   if (identity.session) {
     startWS(identity.session);
   }
+}
+
+async function changeAvatar(hash: string) {
+  const params: Partial<User> = {
+    ...identity.user,
+    avatar: hash,
+  };
+  const user = (await session?.value?.write("user", params)) as User;
+  shared.addUser(user);
 }
 
 let loginUsername = "",
@@ -50,6 +64,10 @@ let loginUsername = "",
       <div>Create date: {{ user?.createDate }}</div>
       <button class="block" @click="logout()">Log out</button>
       <div><span>Nickname: </span><input type="text" v-model="nickname" /></div>
+      <div>
+        <span>Avatar: </span><input type="text" v-model="newAvatarHash" />
+        <button @click="changeAvatar(newAvatarHash)">Change</button>
+      </div>
       <button class="block" @click="restartSocket()">Restart WebSocket</button>
     </div>
     <div v-else class="p-2">
