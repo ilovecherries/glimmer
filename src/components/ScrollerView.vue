@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup="setup" lang="ts">
 import { nextTick, ref, watch } from "@vue/runtime-dom";
 import { Scroller } from "./scroller";
 

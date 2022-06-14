@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup="setup" lang="ts">
 import { RouterView } from "vue-router";
 import SideBar from "@/components/SideBar.vue";
 import { useIdentityStore } from "./stores/identity";

@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup="setup" lang="ts">
 import { render, sendRequest } from "@/lib/helpers";
 import { ContentState, useSharedStore } from "@/stores/shared";
 import { InternalContentType } from "contentapi-ts-bindings/Enums";

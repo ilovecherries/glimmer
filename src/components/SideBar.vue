@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup="setup" lang="ts">
 import { storeToRefs } from "pinia";
 import { useStateStore } from "@/stores/state";
 import NotificationPane from "@/components/sidebar/NotificationPane.vue";

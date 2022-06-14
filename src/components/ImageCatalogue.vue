@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup="setup" lang="ts">
 import { ref } from 'vue';
 
 let open = ref(false);

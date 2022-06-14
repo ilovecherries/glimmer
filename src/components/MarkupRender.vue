@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup="setup" lang="ts">
 import { ref, watch } from "vue";
 
 import Markup_Parse_12y2 from "markup2/parse";

@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup="setup" lang="ts">
 import { ref, watch } from "vue";
 import { api } from "@/lib/qcs";
 import { useRouter } from "vue-router";

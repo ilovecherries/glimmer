@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup="setup" lang="ts">
 import { useIdentityStore } from "@/stores/identity";
 import { storeToRefs } from "pinia";
 import { nextTick, ref, watch } from "vue";

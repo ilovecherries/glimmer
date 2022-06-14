@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup="setup" lang="ts">
 import { storeToRefs } from "pinia";
 import { useSharedStore } from "@/stores/shared";
 import { useSettingsStore } from "@/stores/settings";
