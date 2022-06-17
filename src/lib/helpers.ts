@@ -12,6 +12,7 @@ import { api } from "@/lib/qcs";
 import { getPageRequest } from "contentapi-ts-bindings/Helpers";
 import type { GetPageResult } from "contentapi-ts-bindings/Helpers";
 import { ContentState, useSharedStore } from "@/stores/shared";
+import { generateChatChunks } from "@/lib/chunks";
 
 import javascript from "highlight.js/lib/languages/javascript";
 import typescript from "highlight.js/lib/languages/typescript";
@@ -132,6 +133,7 @@ export const loadPage = async (id: number, callback: () => void) => {
     if (page) {
       shared.addContent(page, ContentState.full);
       data.user?.map(shared.addUser);
+      console.log("CHAT CHUNKS", generateChatChunks(data.message?.reverse() || [], data.user || []));
       const messages = data.message;
       if (messages) {
         messages.map(shared.addComment);

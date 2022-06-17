@@ -5,6 +5,7 @@ import Markup_Parse_12y2 from "markup2/parse";
 import Markup_Legacy from "markup2/legacy";
 import Markup_Langs from "markup2/langs";
 import Markup_Render_Dom from "markup2/render";
+import "markup2/runtime";
 
 const parser = new Markup_Parse_12y2();
 const langs = new Markup_Langs([parser, new Markup_Legacy()]);

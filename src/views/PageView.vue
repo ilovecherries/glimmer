@@ -72,17 +72,15 @@ watch(
     if (param !== undefined) {
       const id = parseInt(param as string);
       loadPage(id, () => {
-          contentId.value = id;
-          headerText.value = contents.value[id].data.name;
-          clearNotif();
-          nextTick(() => {
-            websocket.setStatus(id, Status.active);
-          });
-
-      })
-        .catch(() => {
-          contentId.value = -1;
-        })
+        contentId.value = id;
+        headerText.value = contents.value[id].data.name;
+        clearNotif();
+        nextTick(() => {
+          websocket.setStatus(id, Status.active);
+        });
+      }).catch(() => {
+        contentId.value = -1;
+      });
     }
   },
   { immediate: true }
@@ -156,8 +154,6 @@ watch(
         v-show="showChat"
       />
     </div>
-    <div v-else>
-      COULD NOT FIND PAGE FROM API
-    </div>
+    <div v-else>COULD NOT FIND PAGE FROM API</div>
   </main>
 </template>

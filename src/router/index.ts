@@ -4,6 +4,8 @@ const HomeView = () => import("../views/HomeView.vue");
 const PageView = () => import("../views/PageView.vue");
 const UserView = () => import("../views/UserView.vue");
 const CanvasView = () => import("../views/CanvasView.vue");
+const ImagesView = () => import("../views/ImagesView.vue");
+const CommentsView = () => import("@/views/CommentsView.vue");
 
 export const router = createRouter({
   history: createWebHashHistory(),
@@ -36,7 +38,17 @@ export const router = createRouter({
       name: "fore",
       component: CanvasView,
       props: true,
-    }
+    },
+    {
+      path: "/images",
+      name: "images",
+      component: ImagesView,
+    },
+    {
+      path: "/comments/:id",
+      name: "comments",
+      component: CommentsView,
+    },
   ],
 });
 

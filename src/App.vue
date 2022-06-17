@@ -21,6 +21,7 @@ import type {
 } from "contentapi-ts-bindings/Views";
 import { RequestType } from "contentapi-ts-bindings/Search/RequestType";
 import ImageCatalogue from "./components/ImageCatalogue.vue";
+import type { ContentAPI_Session } from "contentapi-ts-bindings/Helpers";
 
 const identity = useIdentityStore();
 const state = useStateStore();
@@ -37,7 +38,8 @@ const ws = useWebsocketStore();
 const { socket, state: wsState } = storeToRefs(ws);
 
 function manageWS() {
-  if (session?.value && !socket?.value) ws.start(session.value);
+  if (session?.value && !socket?.value)
+    ws.start(session.value as ContentAPI_Session);
   if (!session?.value && socket?.value) ws.stop();
 }
 
@@ -125,7 +127,9 @@ watch(
           <div
             v-if="session"
             :class="`h-2 w-2 mx-3 my-auto rounded-full ${
-              wsState === WebSocketState.Connected ? 'bg-green-400' : 'bg-red-600'
+              wsState === WebSocketState.Connected
+                ? 'bg-green-400'
+                : 'bg-red-600'
             }`"
             title="WebSocket Status"
           ></div>
@@ -140,7 +144,6 @@ watch(
           >
             =
           </button>
-
         </div>
       </header>
       <div
@@ -148,7 +151,10 @@ watch(
           openSidebar ? 'md:grid-cols-[6fr_2fr]' : ''
         } w-full grow`"
       >
-        <div id="main-content" :class="`h-full ${openSidebar ? 'hidden' : 'block'} md:block`">
+        <div
+          id="main-content"
+          :class="`h-full ${openSidebar ? 'hidden' : 'block'} md:block`"
+        >
           <RouterView />
         </div>
         <SideBar />
