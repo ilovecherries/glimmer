@@ -6,15 +6,15 @@ import ChatView from "@/components/ChatView.vue";
 import { useSharedStore } from "@/stores/shared";
 import { loadPage, sendRequest } from "@/lib/helpers";
 import { useWebsocketStore } from "@/stores/websocket";
-import { Status } from "contentapi-ts-bindings/Helpers";
+import { Status } from "contentapi-ts-bindings/dist/Helpers";
 import { onBeforeRouteLeave } from "vue-router";
 import EditorView from "../components/EditorView.vue";
-import type { Content } from "contentapi-ts-bindings/Views";
-import { RequestType } from "contentapi-ts-bindings/Search/RequestType";
+import type { Content } from "contentapi-ts-bindings/dist/Views";
+import { RequestType } from "contentapi-ts-bindings/dist/Search/RequestType";
 import {
   SearchRequests,
   SearchRequest,
-} from "contentapi-ts-bindings/Search/SearchRequests";
+} from "contentapi-ts-bindings/dist/Search/SearchRequests";
 import ThreadImage from "@/assets/SB-thread.png";
 import { api } from "@/lib/qcs";
 

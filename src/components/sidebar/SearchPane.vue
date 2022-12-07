@@ -4,13 +4,13 @@ import { ref } from "@vue/runtime-dom";
 import { useSettingsStore } from "@/stores/settings";
 import { storeToRefs } from "pinia";
 import ThreadImage from "@/assets/SB-thread.png";
-import type { User, Content } from "contentapi-ts-bindings/Views";
+import type { User, Content } from "contentapi-ts-bindings/dist/Views";
 import { api } from "@/lib/qcs";
 import {
   SearchRequest,
   SearchRequests,
-} from "contentapi-ts-bindings/Search/SearchRequests";
-import { RequestType } from "contentapi-ts-bindings/Search/RequestType";
+} from "contentapi-ts-bindings/dist/Search/SearchRequests";
+import { RequestType } from "contentapi-ts-bindings/dist/Search/RequestType";
 import SearchArea from "../SearchArea.vue";
 import type { SearchResult } from "../SearchArea";
 

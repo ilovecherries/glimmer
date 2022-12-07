@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { api } from "@/lib/qcs";
-import { ContentAPI_Session } from "contentapi-ts-bindings/Helpers";
-import type { User } from "contentapi-ts-bindings/Views/User";
+import { ContentAPI_Session } from "contentapi-ts-bindings/dist/Helpers";
+import type { User } from "contentapi-ts-bindings/dist/Views/User";
 import { AxiosError } from "axios";
 
 interface IdentityStoreState {

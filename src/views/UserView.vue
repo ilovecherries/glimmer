@@ -1,9 +1,9 @@
 <script setup="setup" lang="ts">
 import { render, sendRequest } from "@/lib/helpers";
 import { ContentState, useSharedStore } from "@/stores/shared";
-import { InternalContentType } from "contentapi-ts-bindings/Enums";
-import { getUserPageRequest } from "contentapi-ts-bindings/Helpers";
-import type { GetUserPageResult } from "contentapi-ts-bindings/Helpers";
+import { InternalContentType } from "contentapi-ts-bindings/dist/Enums";
+import { getUserPageRequest } from "contentapi-ts-bindings/dist/Helpers";
+import type { GetUserPageResult } from "contentapi-ts-bindings/dist/Helpers";
 import { storeToRefs } from "pinia";
 import { ref, watch } from "vue";
 import { api } from "@/lib/qcs";

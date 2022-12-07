@@ -1,12 +1,12 @@
 <script setup="setup" lang="ts">
 import { sendRequest } from "@/lib/helpers";
-import { InternalContentType } from "contentapi-ts-bindings/Enums";
-import { RequestType } from "contentapi-ts-bindings/Search/RequestType";
+import { InternalContentType } from "contentapi-ts-bindings/dist/Enums";
+import { RequestType } from "contentapi-ts-bindings/dist/Search/RequestType";
 import {
   SearchRequest,
   SearchRequests,
-} from "contentapi-ts-bindings/Search/SearchRequests";
-import type { Content, User } from "contentapi-ts-bindings/Views";
+} from "contentapi-ts-bindings/dist/Search/SearchRequests";
+import type { Content, User } from "contentapi-ts-bindings/dist/Views";
 import { ref, watch } from "vue";
 import { api } from "@/lib/qcs";
 import { useRoute, useRouter } from "vue-router";

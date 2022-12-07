@@ -10,7 +10,7 @@ import ChatView from "../components/ChatView.vue";
 import { loadPage, render } from "@/lib/helpers";
 import MarkupRender from "@/components/MarkupRender.vue";
 import { onBeforeRouteLeave, onBeforeRouteUpdate, useRoute } from "vue-router";
-import { Status } from "contentapi-ts-bindings/Helpers";
+import { Status } from "contentapi-ts-bindings/dist/Helpers";
 import { api } from "@/lib/qcs";
 
 const identity = useIdentityStore();

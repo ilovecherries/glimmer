@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@vue/runtime-dom": "^3.2.33",
-    "contentapi-ts-bindings": "github:ilovecherries/contentapi-ts-bindings",
+    "contentapi-ts-bindings": "^1.1.8",
     "highlight.js": "^11.5.1",
     "markup2": "github:12Me21/markup2#49511854dcd680b7f423dd34a0a0c236586b575f",
     "pinia": "^2.0.13",

@@ -12,13 +12,19 @@ const { avatarSize } = storeToRefs(settings);
 const props = defineProps({
   chunk: Object,
 });
+let avatar = "";
 </script>
 
 <template>
-  <div class="flex mx-1 my-2">
+  <div
+    class="flex mx-1 my-2"
+    :set="
+      (avatar = props.chunk?.[0]?.values.a || props.chunk?.[0]?.user?.avatar)
+    "
+  >
     <img
-      v-if="props.chunk?.[0]?.user?.avatar"
-      :src="api.getFileURL(props.chunk?.[0].user.avatar, avatarSize)"
+      v-if="avatar"
+      :src="api.getFileURL(avatar, avatarSize)"
       class="w-auto h-6 md:h-12 mx-1 md:mr-2 md:rounded border border-bcol"
     />
     <div class="grow flex flex-col">

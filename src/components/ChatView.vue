@@ -6,18 +6,18 @@ import { useSettingsStore } from "@/stores/settings";
 import MarkupRender from "./MarkupRender.vue";
 import { api } from "@/lib/qcs";
 import { useIdentityStore } from "@/stores/identity";
-import type { User, Message } from "contentapi-ts-bindings/Views";
+import type { User, Message } from "contentapi-ts-bindings/dist/Views";
 import ScrollerView from "./ScrollerView.vue";
 import { rethreadMessages, sendRequest } from "../lib/helpers";
 import { render, last } from "../lib/helpers";
 import {
   SearchRequest,
   SearchRequests,
-} from "contentapi-ts-bindings/Search/SearchRequests";
-import { uploadFile } from "contentapi-ts-bindings/BrowserHelpers";
-import { RequestType } from "contentapi-ts-bindings/Search/RequestType";
+} from "contentapi-ts-bindings/dist/Search/SearchRequests";
+import { uploadFile } from "contentapi-ts-bindings/dist/BrowserHelpers";
+import { RequestType } from "contentapi-ts-bindings/dist/Search/RequestType";
 import UserList from "./UserList.vue";
-import type { ContentAPI_Session } from "contentapi-ts-bindings/Helpers";
+import type { ContentAPI_Session } from "contentapi-ts-bindings/dist/Helpers";
 
 const shared = useSharedStore();
 const settings = useSettingsStore();

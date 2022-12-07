@@ -1,16 +1,16 @@
 import { useWebsocketStore } from "@/stores/websocket";
 
 import { useIdentityStore } from "../stores/identity";
-import type { Message } from "contentapi-ts-bindings/Views";
+import type { Message } from "contentapi-ts-bindings/dist/Views";
 import HighlightJS from "highlight.js/lib/core";
 import Markup_Render_Dom from "markup2/render";
 import { useStateStore } from "@/stores/state";
-import type { SearchRequests } from "contentapi-ts-bindings/Search/SearchRequests";
-import type { LiveEvent } from "contentapi-ts-bindings/Live/LiveEvent";
-import type { LiveData } from "contentapi-ts-bindings/Live/LiveData";
+import type { SearchRequests } from "contentapi-ts-bindings/dist/Search/SearchRequests";
+import type { LiveEvent } from "contentapi-ts-bindings/dist/Live/LiveEvent";
+import type { LiveData } from "contentapi-ts-bindings/dist/Live/LiveData";
 import { api } from "@/lib/qcs";
-import { getPageRequest } from "contentapi-ts-bindings/Helpers";
-import type { GetPageResult } from "contentapi-ts-bindings/Helpers";
+import { getPageRequest } from "contentapi-ts-bindings/dist/Helpers";
+import type { GetPageResult } from "contentapi-ts-bindings/dist/Helpers";
 import { ContentState, useSharedStore } from "@/stores/shared";
 import { generateChatChunks } from "@/lib/chunks";
 
@@ -60,6 +60,11 @@ export const sendRequest = <T = Record<string, Array<object>>>(
     if (identity.loggedIn) {
       const ws = useWebsocketStore();
       ws.sendRequest(search, (a: LiveEvent) => {
+        // TODO: change contentapi-ts-bindings to have `error` in the library.
+        if ((a as any).error) {
+          reject((a as any).error);
+        }
+        console.log(a);
         resolve((a.data as unknown as LiveData<T>).objects);
       });
     } else {

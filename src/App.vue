@@ -13,15 +13,15 @@ import { useSettingsStore } from "./stores/settings";
 import {
   SearchRequest,
   SearchRequests,
-} from "contentapi-ts-bindings/Search/SearchRequests";
+} from "contentapi-ts-bindings/dist/Search/SearchRequests";
 import type {
   Content,
   MessageAggregate,
   User,
-} from "contentapi-ts-bindings/Views";
-import { RequestType } from "contentapi-ts-bindings/Search/RequestType";
+} from "contentapi-ts-bindings/dist/Views";
+import { RequestType } from "contentapi-ts-bindings/dist/Search/RequestType";
 import ImageCatalogue from "./components/ImageCatalogue.vue";
-import type { ContentAPI_Session } from "contentapi-ts-bindings/Helpers";
+import type { ContentAPI_Session } from "contentapi-ts-bindings/dist/Helpers";
 
 const identity = useIdentityStore();
 const state = useStateStore();
@@ -67,7 +67,7 @@ watch(
           ),
           new SearchRequest(
             RequestType.content,
-            "id,values,keywords,votes,text,commentCount,name,createUserId",
+            "id,values,keywords,engagement,text,commentCount,name,createUserId",
             "id in @message_aggregate.contentId"
           ),
           new SearchRequest(
@@ -78,31 +78,33 @@ watch(
         ]
       );
       console.log("🏄 Getting initial Message Aggregate to populate activity");
-      sendRequest(search).then((data) => {
-        const shared = useSharedStore();
-        data.content?.map((x) =>
-          shared.addContent(x as Content, ContentState.partial)
-        );
-        data.user?.map((x) => shared.addUser(x as User));
-        data.message_aggregate?.map((x) => {
-          const m = x as MessageAggregate;
-          const id = m.contentId;
-          if (!shared.notifications[id])
-            shared.notifications[id] = {
-              contentId: id,
-              lastCommentDate: m.maxCreateDate,
-              count: m.count,
-            };
-          else {
-            const lastDate = shared.notifications[id].lastCommentDate;
-            if (new Date(lastDate) < new Date(m.maxCreateDate)) {
-              shared.notifications[id].lastCommentDate = m.maxCreateDate;
+      sendRequest(search)
+        .then((data) => {
+          const shared = useSharedStore();
+          data.content?.map((x) =>
+            shared.addContent(x as Content, ContentState.partial)
+          );
+          data.user?.map((x) => shared.addUser(x as User));
+          data.message_aggregate?.map((x) => {
+            const m = x as MessageAggregate;
+            const id = m.contentId;
+            if (!shared.notifications[id])
+              shared.notifications[id] = {
+                contentId: id,
+                lastCommentDate: m.maxCreateDate,
+                count: m.count,
+              };
+            else {
+              const lastDate = shared.notifications[id].lastCommentDate;
+              if (new Date(lastDate) < new Date(m.maxCreateDate)) {
+                shared.notifications[id].lastCommentDate = m.maxCreateDate;
+              }
+              shared.notifications[id].count += m.count;
             }
-            shared.notifications[id].count += m.count;
-          }
-        });
-        shared.messageInitialLoad = true;
-      });
+          });
+          shared.messageInitialLoad = true;
+        })
+        .catch((e) => console.error(e));
     }
   },
   { immediate: true }

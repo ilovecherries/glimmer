@@ -1,17 +1,17 @@
-import { UserAction } from "contentapi-ts-bindings/Enums";
+import { UserAction } from "contentapi-ts-bindings/dist/Enums";
 import {
   Status,
   type ContentAPI_Session,
   type ContentAPI_Socket_Function,
-} from "contentapi-ts-bindings/Helpers";
-import { ContentAPI_Browser_Socket } from "contentapi-ts-bindings/BrowserHelpers";
-import { LiveEventType } from "contentapi-ts-bindings/Live/LiveEvent";
-import { WebSocketResponseType } from "contentapi-ts-bindings/Live/WebSocketResponse";
-import type { Content, Message, User } from "contentapi-ts-bindings/Views";
+} from "contentapi-ts-bindings/dist/Helpers";
+import { ContentAPI_Browser_Socket } from "contentapi-ts-bindings/dist/BrowserHelpers";
+import { LiveEventType } from "contentapi-ts-bindings/dist/Live/LiveEvent";
+import { WebSocketResponseType } from "contentapi-ts-bindings/dist/Live/WebSocketResponse";
+import type { Content, Message, User } from "contentapi-ts-bindings/dist/Views";
 import { defineStore } from "pinia";
 import { ContentState, useSharedStore } from "./shared";
-import type { UserlistResult } from "contentapi-ts-bindings/Live/UserlistResult";
-import type { SearchRequests } from "contentapi-ts-bindings/Search/SearchRequests";
+import type { UserlistResult } from "contentapi-ts-bindings/dist/Live/UserlistResult";
+import type { SearchRequests } from "contentapi-ts-bindings/dist/Search/SearchRequests";
 import { useIdentityStore } from "./identity";
 import { api } from "@/lib/qcs";
 

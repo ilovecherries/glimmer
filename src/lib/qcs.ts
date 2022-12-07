@@ -1,4 +1,4 @@
-import { ContentAPI } from "contentapi-ts-bindings/Helpers";
+import { ContentAPI } from "contentapi-ts-bindings/dist/Helpers";
 
 export const api = new ContentAPI(import.meta.env.VITE_API_DOMAIN);
 

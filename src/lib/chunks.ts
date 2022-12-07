@@ -1,4 +1,4 @@
-import type { Message, User } from "contentapi-ts-bindings/Views";
+import type { Message, User } from "contentapi-ts-bindings/dist/Views";
 
 export interface Chunk {
   comments: Array<Message>;
@@ -72,7 +72,8 @@ const chatPair = (x: MessageWithUser, y: MessageWithUser) =>
   x.contentId === y.contentId &&
   x.user?.avatar === y.user?.avatar &&
   x.user?.username === y.user?.username &&
-  x.values?.n === y.values?.n;
+  x.values?.n === y.values?.n &&
+  x.values?.a === y.values?.a;
 
 export function generateChunks(
   msgs: Message[],

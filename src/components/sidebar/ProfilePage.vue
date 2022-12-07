@@ -4,8 +4,8 @@ import { storeToRefs } from "pinia";
 import { useSettingsStore, THEMES } from "@/stores/settings";
 import { api } from "@/lib/qcs";
 import { useWebsocketStore } from "@/stores/websocket";
-import { MARKUPS } from "contentapi-ts-bindings/Views/Extras/MarkupLanguage";
-import type { User } from "contentapi-ts-bindings/Views";
+import { MARKUPS } from "contentapi-ts-bindings/dist/Views/Extras/MarkupLanguage";
+import type { User } from "contentapi-ts-bindings/dist/Views";
 import { useSharedStore } from "@/stores/shared";
 
 const identity = useIdentityStore();
@@ -71,12 +71,13 @@ let loginUsername = "",
       <button class="block" @click="restartSocket()">Restart WebSocket</button>
     </div>
     <div v-else class="p-2">
-      <h2 class="text-2xl">{{ domain }}</h2>
+      <h2 class="text-xl">Welcome to ContentAPI</h2>
+      <h2 class="text-l">Server: {{ domain }}</h2>
       <hr />
-      <h3 class="text-xl">login</h3>
+      <h3 class="text-xl">Login</h3>
       <form @submit.prevent="signIn(loginUsername, formPassword)">
         <div>
-          <label class="block text-lg" for="login-username">Username:</label>
+          <label class="block" for="login-username">Username</label>
           <input
             v-model="loginUsername"
             id="login-username"
@@ -86,7 +87,7 @@ let loginUsername = "",
           />
         </div>
         <div>
-          <label for="login-password" class="block text-lg"> Password: </label>
+          <label for="login-password" class="block">Password</label>
           <input
             v-model="formPassword"
             id="login-password"
@@ -97,10 +98,10 @@ let loginUsername = "",
         </div>
         <button type="submit">Log in</button>
       </form>
-      <h3 class="text-xl">register</h3>
+      <h3 class="text-xl">Register</h3>
       <form @submit.prevent="signIn(registerUsername, registerPassword)">
         <div>
-          <label class="block text-lg" for="register-username">Username:</label>
+          <label class="block" for="register-username">Username</label>
           <input
             v-model="registerUsername"
             id="register-username"
@@ -110,7 +111,7 @@ let loginUsername = "",
           />
         </div>
         <div>
-          <label class="block text-lg" for="register-email">Email:</label>
+          <label class="block" for="register-email">Email</label>
           <input
             v-model="registerEmail"
             id="register-email"
@@ -120,9 +121,7 @@ let loginUsername = "",
           />
         </div>
         <div>
-          <label for="register-password" class="block text-lg">
-            Password:
-          </label>
+          <label for="register-password" class="block">Password</label>
           <input
             v-model="registerPassword"
             id="login-password"

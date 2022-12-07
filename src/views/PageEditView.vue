@@ -3,12 +3,12 @@ import { nextTick, ref, watch } from "@vue/runtime-dom";
 import { onBeforeRouteLeave } from "vue-router";
 import { render, sendRequest } from "@/lib/helpers";
 import MarkupRender from "@/components/MarkupRender.vue";
-import { MARKUPS } from "contentapi-ts-bindings/Views/Extras/MarkupLanguage";
+import { MARKUPS } from "contentapi-ts-bindings/dist/Views/Extras/MarkupLanguage";
 import { useStateStore } from "@/stores/state";
 import { storeToRefs } from "pinia";
-import type { Content } from "contentapi-ts-bindings/Views";
-import { getPageRequest } from "contentapi-ts-bindings/Helpers";
-import type { GetPageResult } from "contentapi-ts-bindings/Helpers";
+import type { Content } from "contentapi-ts-bindings/dist/Views";
+import { getPageRequest } from "contentapi-ts-bindings/dist/Helpers";
+import type { GetPageResult } from "contentapi-ts-bindings/dist/Helpers";
 
 const state = useStateStore();
 const { headerText } = storeToRefs(state);
